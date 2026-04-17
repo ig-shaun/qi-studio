@@ -12,3 +12,6 @@ out
 coverage
 .vitest-cache
 .pnpm-store
+tsconfig.tsbuildinfo
+**/.next/types/
+
