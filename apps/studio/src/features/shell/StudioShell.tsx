@@ -18,6 +18,7 @@ import { RolesView } from "../roles/RolesView";
 import { DelegationsView } from "../delegations/DelegationsView";
 import { QiFlowView } from "../flow/QiFlowView";
 import { GovernanceView } from "../governance/GovernanceView";
+import { FitnessView } from "../fitness/FitnessView";
 import { ViewStub } from "../views/ViewStub";
 import { CommandBar } from "./CommandBar";
 import { NavRail } from "./NavRail";
@@ -149,6 +150,8 @@ export function StudioShell() {
               <QiFlowView graph={graph} onPatch={applyPatch} />
             ) : activeView === "governance" ? (
               <GovernanceView graph={graph} onPatch={applyPatch} />
+            ) : activeView === "fitness" ? (
+              <FitnessView graph={graph} />
             ) : (
               <ViewStub title={view.title} />
             )}

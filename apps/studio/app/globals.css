@@ -1629,3 +1629,199 @@ button {
   top: 10px;
   right: 10px;
 }
+
+/* ---------------------------------------------------------------- */
+/* Fitness lab                                                       */
+/* ---------------------------------------------------------------- */
+
+.fitness-overall {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 8px 14px;
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-md);
+  background: var(--paper-1);
+}
+
+.fitness-overall__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.fitness-overall__value {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--ink-0);
+  line-height: 1;
+}
+
+.fitness-overall__value span {
+  font-size: 14px;
+  color: var(--ink-3);
+  margin-left: 2px;
+}
+
+.fitness-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px 18px;
+  background: var(--paper-0);
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-lg);
+}
+
+.metric-card--good {
+  border-color: color-mix(in oklch, var(--sage) 35%, var(--line-1));
+}
+
+.metric-card--warn {
+  border-color: color-mix(in oklch, var(--amber) 35%, var(--line-1));
+}
+
+.metric-card--poor {
+  border-color: color-mix(in oklch, var(--coral) 40%, var(--line-1));
+}
+
+.metric-card__label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.metric-card__number {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 500;
+  color: var(--ink-0);
+}
+
+.metric-card__number span {
+  font-size: 16px;
+  color: var(--ink-3);
+  margin-left: 2px;
+}
+
+.metric-card__bar {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--paper-3);
+  overflow: hidden;
+}
+
+.metric-card__bar-fill {
+  height: 100%;
+  transition: width var(--t-fast);
+  background: color-mix(in oklch, var(--accent) 75%, var(--paper-3));
+}
+
+.metric-card--good .metric-card__bar-fill {
+  background: var(--sage);
+}
+
+.metric-card--warn .metric-card__bar-fill {
+  background: var(--amber);
+}
+
+.metric-card--poor .metric-card__bar-fill {
+  background: var(--coral);
+}
+
+.metric-card__display {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.metric-card__desc {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+/* Anti-patterns */
+
+.antipattern-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.antipattern-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--paper-0);
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-lg);
+  border-left-width: 3px;
+}
+
+.antipattern-row--error {
+  border-left-color: color-mix(in oklch, var(--coral) 70%, var(--line-2));
+}
+
+.antipattern-row--warning {
+  border-left-color: color-mix(in oklch, var(--amber) 70%, var(--line-2));
+}
+
+.antipattern-row__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.antipattern-row__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-0);
+}
+
+.antipattern-row__count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.antipattern-row__desc {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.antipattern-badge--error {
+  color: color-mix(in oklch, var(--coral) 55%, var(--ink-0));
+  background: color-mix(in oklch, var(--coral) 18%, var(--paper-1));
+  border-color: color-mix(in oklch, var(--coral) 50%, var(--line-1));
+}
+
+.antipattern-badge--warning {
+  color: color-mix(in oklch, var(--amber) 55%, var(--ink-0));
+  background: color-mix(in oklch, var(--amber) 15%, var(--paper-1));
+  border-color: color-mix(in oklch, var(--amber) 45%, var(--line-1));
+}
