@@ -24,7 +24,7 @@ export function CommandBar({
         <BrandMark className="brand-mark" />
         <div className="brand-copy">
           <div className="brand-wordmark">Qi Studio</div>
-          <div className="eyebrow">Intent-first operating model</div>
+          <div className="eyebrow">Intelligent Org Design</div>
         </div>
       </div>
 

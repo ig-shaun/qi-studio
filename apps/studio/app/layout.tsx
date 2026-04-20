@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata = {
-  title: "Qi Studio — Intent-first operating model",
+  title: "Qi Studio — Intelligent Org Design",
   description:
     "Qi Studio is an intent-first design environment for shaping AI-native organizations.",
 };
