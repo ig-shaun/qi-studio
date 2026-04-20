@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Graph } from "@ixo-studio/core/schema";
-import type { InvariantViolation } from "@ixo-studio/core/store";
+import type { GraphPatch, InvariantViolation } from "@ixo-studio/core/store";
 import { emptyGraph } from "@ixo-studio/core/schema";
+import { applyPatchTo } from "@ixo-studio/core/compiler";
+import { validateGraph } from "@ixo-studio/core/store";
 import { Organism } from "../organism/Organism";
 import { Inspector } from "../inspector/Inspector";
 import { GenerateModal } from "../compile/GenerateModal";
 import { ExportModal } from "../io/ExportModal";
 import { ImportButton } from "../io/ImportButton";
+import { IntentKernelView } from "../intent/IntentKernelView";
 import { ViewStub } from "../views/ViewStub";
 import { CommandBar } from "./CommandBar";
 import { NavRail } from "./NavRail";
@@ -27,6 +30,14 @@ export function StudioShell() {
   const [workspaceName, setWorkspaceName] = useState<string>(
     DEFAULT_WORKSPACE_NAME
   );
+
+  const applyPatch = useCallback((patch: GraphPatch) => {
+    setGraph((g) => applyPatchTo(g, patch));
+  }, []);
+
+  useEffect(() => {
+    setViolations(validateGraph(graph));
+  }, [graph]);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(NAV_STATE_KEY);
@@ -118,6 +129,8 @@ export function StudioShell() {
                 selectedId={selectedId}
                 onSelect={setSelectedId}
               />
+            ) : activeView === "intent" ? (
+              <IntentKernelView graph={graph} onPatch={applyPatch} />
             ) : (
               <ViewStub title={view.title} />
             )}
