@@ -67,7 +67,7 @@ export function Organism({ graph, selectedId, onSelect }: Props) {
               : n.stroke;
             return (
               <path
-                key={n.id}
+                key={`${n.ring}:${n.parentId ?? ""}:${n.id}`}
                 className={`sector${faded ? " sector--faded" : ""}`}
                 d={sectorPath(n)}
                 fill={fill}
@@ -97,7 +97,7 @@ export function Organism({ graph, selectedId, onSelect }: Props) {
               const large = n.endAngle - n.startAngle > Math.PI ? 1 : 0;
               return (
                 <path
-                  key={`accent-${n.id}`}
+                  key={`accent:${n.ring}:${n.parentId ?? ""}:${n.id}`}
                   d={`M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`}
                   stroke={n.accent}
                   strokeWidth={3}
@@ -113,7 +113,7 @@ export function Organism({ graph, selectedId, onSelect }: Props) {
             if (n.ring === "mission") {
               return (
                 <text
-                  key={`label-${n.id}`}
+                  key={`label:${n.ring}:${n.parentId ?? ""}:${n.id}`}
                   className="sector-label sector-label--center"
                   x={cx}
                   y={cy + 5}
@@ -141,7 +141,7 @@ export function Organism({ graph, selectedId, onSelect }: Props) {
               .join(" ");
             return (
               <text
-                key={`label-${n.id}`}
+                key={`label:${n.ring}:${n.parentId ?? ""}:${n.id}`}
                 className={className}
                 x={pos.x}
                 y={pos.y}
