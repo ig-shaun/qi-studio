@@ -1521,3 +1521,111 @@ button {
   height: 14px;
   cursor: pointer;
 }
+
+/* ---------------------------------------------------------------- */
+/* Qi Flow — interaction edge rows                                   */
+/* ---------------------------------------------------------------- */
+
+.edge-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.edge-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(200px, 1fr);
+  grid-auto-rows: auto;
+  gap: 12px;
+  padding: 14px 48px 14px 16px;
+  background: var(--paper-0);
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-lg);
+}
+
+.edge-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+}
+
+.edge-row--collaboration::before {
+  background: color-mix(in oklch, var(--accent) 70%, transparent);
+}
+
+.edge-row--x-as-a-service::before {
+  background: color-mix(in oklch, var(--violet) 70%, transparent);
+}
+
+.edge-row--facilitation::before {
+  background: color-mix(in oklch, var(--sage) 70%, transparent);
+}
+
+.edge-row--warn {
+  border-color: color-mix(in oklch, var(--coral) 45%, var(--line-1));
+}
+
+.edge-row__ends {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  grid-column: 1;
+  min-width: 0;
+}
+
+.edge-row__arrow {
+  color: var(--ink-3);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.edge-row__mode {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.edge-mode-chip--collaboration.chip--on {
+  background: color-mix(in oklch, var(--accent) 18%, var(--paper-0));
+  border-color: color-mix(in oklch, var(--accent) 50%, var(--line-1));
+}
+
+.edge-mode-chip--x-as-a-service.chip--on {
+  background: color-mix(in oklch, var(--violet) 18%, var(--paper-0));
+  border-color: color-mix(in oklch, var(--violet) 50%, var(--line-1));
+}
+
+.edge-mode-chip--facilitation.chip--on {
+  background: color-mix(in oklch, var(--sage) 18%, var(--paper-0));
+  border-color: color-mix(in oklch, var(--sage) 50%, var(--line-1));
+}
+
+.edge-row__details {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(240px, 2fr);
+  gap: 12px;
+}
+
+.edge-row__warn {
+  grid-column: 1 / -1;
+  color: color-mix(in oklch, var(--coral) 60%, var(--ink-0));
+  font-size: 12px;
+}
+
+.edge-row__remove {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
