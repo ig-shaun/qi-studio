@@ -1405,3 +1405,119 @@ button {
   content: "⚠ ";
   color: var(--coral);
 }
+
+/* ---------------------------------------------------------------- */
+/* Governance — checkpoints + policies                               */
+/* ---------------------------------------------------------------- */
+
+.governance-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.governance-section__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink-0);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-1);
+}
+
+.checkpoint-card,
+.policy-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  background: var(--paper-0);
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-lg);
+  position: relative;
+}
+
+.checkpoint-card::before,
+.policy-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+  background: var(--line-2);
+}
+
+.checkpoint-card--reversible::before {
+  background: color-mix(in oklch, var(--sage) 70%, transparent);
+}
+.checkpoint-card--partially-reversible::before {
+  background: color-mix(in oklch, var(--amber) 70%, transparent);
+}
+.checkpoint-card--irreversible::before {
+  background: color-mix(in oklch, var(--coral) 70%, transparent);
+}
+
+.checkpoint-card--warn {
+  border-color: color-mix(in oklch, var(--coral) 45%, var(--line-1));
+}
+
+.policy-card--blocking::before {
+  background: color-mix(in oklch, var(--coral) 55%, var(--line-2));
+}
+
+.policy-card--advisory::before {
+  background: color-mix(in oklch, var(--sage) 55%, var(--line-2));
+}
+
+.reversibility-badge--reversible {
+  color: color-mix(in oklch, var(--sage) 50%, var(--ink-0));
+  background: color-mix(in oklch, var(--sage) 15%, var(--paper-1));
+  border-color: color-mix(in oklch, var(--sage) 45%, var(--line-1));
+}
+
+.reversibility-badge--partially-reversible {
+  color: color-mix(in oklch, var(--amber) 55%, var(--ink-0));
+  background: color-mix(in oklch, var(--amber) 15%, var(--paper-1));
+  border-color: color-mix(in oklch, var(--amber) 45%, var(--line-1));
+}
+
+.reversibility-badge--irreversible {
+  color: color-mix(in oklch, var(--coral) 55%, var(--ink-0));
+  background: color-mix(in oklch, var(--coral) 18%, var(--paper-1));
+  border-color: color-mix(in oklch, var(--coral) 50%, var(--line-1));
+}
+
+.enforcement-badge--blocking {
+  color: color-mix(in oklch, var(--coral) 55%, var(--ink-0));
+  background: color-mix(in oklch, var(--coral) 18%, var(--paper-1));
+  border-color: color-mix(in oklch, var(--coral) 50%, var(--line-1));
+}
+
+.enforcement-badge--advisory {
+  color: color-mix(in oklch, var(--sage) 55%, var(--ink-0));
+  background: color-mix(in oklch, var(--sage) 15%, var(--paper-1));
+  border-color: color-mix(in oklch, var(--sage) 45%, var(--line-1));
+}
+
+.toggle-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-md);
+  background: var(--paper-1);
+  color: var(--ink-1);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.toggle-field input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}

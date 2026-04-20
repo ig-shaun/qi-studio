@@ -16,6 +16,7 @@ import { ValueLoopsView } from "../loops/ValueLoopsView";
 import { PodsView } from "../pods/PodsView";
 import { RolesView } from "../roles/RolesView";
 import { DelegationsView } from "../delegations/DelegationsView";
+import { GovernanceView } from "../governance/GovernanceView";
 import { ViewStub } from "../views/ViewStub";
 import { CommandBar } from "./CommandBar";
 import { NavRail } from "./NavRail";
@@ -143,6 +144,8 @@ export function StudioShell() {
               <RolesView graph={graph} onPatch={applyPatch} />
             ) : activeView === "agents" ? (
               <DelegationsView graph={graph} onPatch={applyPatch} />
+            ) : activeView === "governance" ? (
+              <GovernanceView graph={graph} onPatch={applyPatch} />
             ) : (
               <ViewStub title={view.title} />
             )}
