@@ -718,7 +718,45 @@ button {
 
 .compile-log__item {
   border-top: 1px solid var(--line-1);
-  padding-top: 6px;
+  padding-top: 8px;
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.compile-log__status {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+.compile-log__item--running .compile-log__status {
+  color: var(--accent);
+  animation: compile-log-pulse 1.2s ease-in-out infinite;
+}
+
+.compile-log__item--done .compile-log__status {
+  color: var(--sage, oklch(0.55 0.09 155));
+}
+
+.compile-log__item--pending .compile-log__pass,
+.compile-log__item--pending .compile-log__status {
+  opacity: 0.45;
+}
+
+.compile-log__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+@keyframes compile-log-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }
 
 .compile-log__pass {
@@ -729,7 +767,12 @@ button {
   color: var(--ink-3);
 }
 
+.compile-log__item--running .compile-log__pass {
+  color: var(--ink-0);
+}
+
 .compile-log__rationale {
   color: var(--ink-1);
   font-size: 12.5px;
+  line-height: 1.45;
 }

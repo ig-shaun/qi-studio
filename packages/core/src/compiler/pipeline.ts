@@ -23,9 +23,24 @@ const ALL_PASSES: Pass[] = [
   generatePath,
 ];
 
+import type { PassId } from "./passes/types.js";
+
+export const PASS_ORDER: readonly PassId[] = [
+  "parseIntent",
+  "synthesizeValueLoops",
+  "emergePods",
+  "composeRoles",
+  "placeAgents",
+  "synthesizeGovernance",
+  "wireFlows",
+  "evaluateFitness",
+  "generatePath",
+] as const;
+
 export type CompileOptions = {
   userPrompt: string;
   initialGraph: Graph;
+  onBeforeStep?: (passId: PassId) => void | Promise<void>;
   onStep?: (result: PassResult, updatedGraph: Graph) => void | Promise<void>;
   signal?: AbortSignal;
 };
@@ -33,13 +48,17 @@ export type CompileOptions = {
 export const compileIntent = async ({
   userPrompt,
   initialGraph,
+  onBeforeStep,
   onStep,
   signal,
 }: CompileOptions): Promise<{ graph: Graph; results: PassResult[] }> => {
   let graph = initialGraph;
   const results: PassResult[] = [];
-  for (const pass of ALL_PASSES) {
+  for (let i = 0; i < ALL_PASSES.length; i++) {
+    const pass = ALL_PASSES[i]!;
+    const passId = PASS_ORDER[i]!;
     if (signal?.aborted) throw new Error("compile aborted");
+    await onBeforeStep?.(passId);
     const result = await pass({ graph, userPrompt, ...(signal ? { signal } : {}) });
     graph = applyPatchTo(graph, result.patch);
     results.push(result);

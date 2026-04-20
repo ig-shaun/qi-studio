@@ -6,49 +6,128 @@ import type { InvariantViolation } from "@ixo-studio/core/store";
 import type { PassResult } from "@ixo-studio/core/compiler";
 import { Modal } from "../shell/Modal";
 
-type CompileResponse = {
+type CompileResult = {
   graph: Graph;
   results: PassResult[];
   violations: InvariantViolation[];
 };
 
 type Props = {
-  onResult: (r: CompileResponse) => void;
+  onResult: (r: CompileResult) => void;
   onClose: () => void;
 };
 
 const DEFAULT_PROMPT =
   "Build a climate-intent cooperative focused on smallholder carbon verification in East Africa. Values: scientific rigor, farmer sovereignty, regulatory trust. Horizon: 1 year.";
 
+const PASS_LABELS: Record<string, string> = {
+  parseIntent: "Parsing intent kernel",
+  synthesizeValueLoops: "Synthesizing value loops",
+  emergePods: "Emerging PODs",
+  composeRoles: "Composing roles",
+  placeAgents: "Placing agents",
+  synthesizeGovernance: "Synthesizing governance",
+  wireFlows: "Wiring flows",
+  evaluateFitness: "Evaluating fitness",
+  generatePath: "Generating path",
+};
+
+type PassStatus = "pending" | "running" | "done";
+type PassRow = {
+  passId: string;
+  status: PassStatus;
+  rationale?: string;
+  opCount?: number;
+};
+
+type StreamEvent =
+  | { type: "plan"; passes: string[] }
+  | { type: "pass-start"; passId: string }
+  | { type: "pass-done"; passId: string; rationale?: string; opCount?: number }
+  | { type: "done"; graph: Graph; results: PassResult[]; violations: InvariantViolation[] }
+  | { type: "error"; message: string };
+
 export function GenerateModal({ onResult, onClose }: Props) {
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<PassResult[] | null>(null);
+  const [passes, setPasses] = useState<PassRow[]>([]);
 
   async function compile() {
     setLoading(true);
     setError(null);
-    setResults(null);
+    setPasses([]);
+
     try {
       const res = await fetch("/api/compile", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ prompt }),
       });
-      const json = (await res.json()) as CompileResponse | { error: string };
-      if (!res.ok || "error" in json) {
-        setError("error" in json ? json.error : `HTTP ${res.status}`);
-        return;
+      if (!res.ok || !res.body) {
+        throw new Error(`HTTP ${res.status}`);
       }
-      setResults(json.results);
-      onResult(json);
-      onClose();
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const event = JSON.parse(line) as StreamEvent;
+          handleEvent(event);
+        }
+      }
     } catch (err) {
       console.error("[compile] request failed:", err);
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
+    }
+
+    function handleEvent(event: StreamEvent) {
+      if (event.type === "plan") {
+        setPasses(event.passes.map((p) => ({ passId: p, status: "pending" })));
+        return;
+      }
+      if (event.type === "pass-start") {
+        setPasses((cur) =>
+          cur.map((p) =>
+            p.passId === event.passId ? { ...p, status: "running" } : p
+          )
+        );
+        return;
+      }
+      if (event.type === "pass-done") {
+        setPasses((cur) =>
+          cur.map((p) => {
+            if (p.passId !== event.passId) return p;
+            const next: PassRow = { ...p, status: "done" };
+            if (event.rationale !== undefined) next.rationale = event.rationale;
+            if (event.opCount !== undefined) next.opCount = event.opCount;
+            return next;
+          })
+        );
+        return;
+      }
+      if (event.type === "done") {
+        onResult({
+          graph: event.graph,
+          results: event.results,
+          violations: event.violations,
+        });
+        onClose();
+        return;
+      }
+      if (event.type === "error") {
+        setError(event.message);
+      }
     }
   }
 
@@ -64,9 +143,14 @@ export function GenerateModal({ onResult, onClose }: Props) {
         rows={7}
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
+        disabled={loading}
       />
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-        <button className="button button--ghost" onClick={onClose}>
+        <button
+          className="button button--ghost"
+          onClick={onClose}
+          disabled={loading}
+        >
           Cancel
         </button>
         <button
@@ -83,13 +167,23 @@ export function GenerateModal({ onResult, onClose }: Props) {
           {error}
         </p>
       )}
-      {results && (
+      {passes.length > 0 && (
         <ul className="compile-log">
-          {results.map((r) => (
-            <li key={r.patch.id} className="compile-log__item">
-              <div className="compile-log__pass">{r.passId}</div>
-              <div className="compile-log__rationale">
-                {r.patch.rationale || r.notes || "no-op"}
+          {passes.map((p) => (
+            <li
+              key={p.passId}
+              className={`compile-log__item compile-log__item--${p.status}`}
+            >
+              <div className="compile-log__status" aria-hidden>
+                {p.status === "done" ? "✓" : p.status === "running" ? "…" : "·"}
+              </div>
+              <div className="compile-log__body">
+                <div className="compile-log__pass">
+                  {PASS_LABELS[p.passId] ?? p.passId}
+                </div>
+                {p.rationale && (
+                  <div className="compile-log__rationale">{p.rationale}</div>
+                )}
               </div>
             </li>
           ))}
