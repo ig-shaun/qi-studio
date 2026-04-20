@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { BrandMark, SearchIcon } from "./icons";
 
 type Props = {
@@ -7,6 +8,7 @@ type Props = {
   onGenerate: () => void;
   onStressTest?: () => void;
   onExport?: () => void;
+  importSlot?: ReactNode;
 };
 
 export function CommandBar({
@@ -14,6 +16,7 @@ export function CommandBar({
   onGenerate,
   onStressTest,
   onExport,
+  importSlot,
 }: Props) {
   return (
     <header className="command-bar">
@@ -60,6 +63,7 @@ export function CommandBar({
         >
           Export
         </button>
+        {importSlot}
       </div>
     </header>
   );

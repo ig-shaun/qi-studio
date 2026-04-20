@@ -7,12 +7,15 @@ import { emptyGraph } from "@ixo-studio/core/schema";
 import { Organism } from "../organism/Organism";
 import { Inspector } from "../inspector/Inspector";
 import { GenerateModal } from "../compile/GenerateModal";
+import { ExportModal } from "../io/ExportModal";
+import { ImportButton } from "../io/ImportButton";
 import { ViewStub } from "../views/ViewStub";
 import { CommandBar } from "./CommandBar";
 import { NavRail } from "./NavRail";
 import { VIEWS, type ViewId } from "./views";
 
 const NAV_STATE_KEY = "qi.navExpanded";
+const DEFAULT_WORKSPACE_NAME = "AI-native operating model";
 
 export function StudioShell() {
   const [graph, setGraph] = useState<Graph>(emptyGraph());
@@ -20,7 +23,10 @@ export function StudioShell() {
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
   const [activeView, setActiveView] = useState<ViewId>("organism");
   const [navExpanded, setNavExpanded] = useState<boolean>(false);
-  const [modal, setModal] = useState<null | "generate">(null);
+  const [modal, setModal] = useState<null | "generate" | "export">(null);
+  const [workspaceName, setWorkspaceName] = useState<string>(
+    DEFAULT_WORKSPACE_NAME
+  );
 
   useEffect(() => {
     const stored = window.localStorage.getItem(NAV_STATE_KEY);
@@ -39,8 +45,20 @@ export function StudioShell() {
   return (
     <div className="app-shell">
       <CommandBar
-        workspaceName="AI-native operating model"
+        workspaceName={workspaceName}
         onGenerate={() => setModal("generate")}
+        {...(hasGraph ? { onExport: () => setModal("export") } : {})}
+        importSlot={
+          <ImportButton
+            onImport={({ graph, violations, workspaceName: name }) => {
+              setGraph(graph);
+              setViolations(violations);
+              setSelectedId(undefined);
+              setActiveView("organism");
+              if (name) setWorkspaceName(name);
+            }}
+          />
+        }
       />
 
       <div className="app-grid" data-nav={navExpanded ? "expanded" : "collapsed"}>
@@ -117,6 +135,15 @@ export function StudioShell() {
             setSelectedId(undefined);
             setActiveView("organism");
           }}
+          onClose={() => setModal(null)}
+        />
+      )}
+
+      {modal === "export" && (
+        <ExportModal
+          graph={graph}
+          workspaceName={workspaceName}
+          violations={violations}
           onClose={() => setModal(null)}
         />
       )}

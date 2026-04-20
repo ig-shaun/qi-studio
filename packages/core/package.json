@@ -11,7 +11,8 @@
     "./store": "./src/store/index.ts",
     "./compiler": "./src/compiler/index.ts",
     "./copilot": "./src/copilot/index.ts",
-    "./fitness": "./src/fitness/index.ts"
+    "./fitness": "./src/fitness/index.ts",
+    "./export": "./src/export/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
