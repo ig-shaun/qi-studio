@@ -549,11 +549,10 @@ function PolicyCard({
                   key={t.id}
                   className={`chip${on ? " chip--on" : ""}`}
                   onClick={() => toggle(t.id)}
+                  title={`${t.label} · ${t.kind}`}
                 >
-                  {t.label}
-                  <span style={{ marginLeft: 6, color: "var(--ink-3)" }}>
-                    {t.kind}
-                  </span>
+                  <span className="chip__kind">{t.kind}</span>
+                  <span className="chip__label">{t.label}</span>
                 </button>
               );
             })
