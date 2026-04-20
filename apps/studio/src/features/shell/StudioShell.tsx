@@ -12,6 +12,7 @@ import { GenerateModal } from "../compile/GenerateModal";
 import { ExportModal } from "../io/ExportModal";
 import { ImportButton } from "../io/ImportButton";
 import { IntentKernelView } from "../intent/IntentKernelView";
+import { ValueLoopsView } from "../loops/ValueLoopsView";
 import { ViewStub } from "../views/ViewStub";
 import { CommandBar } from "./CommandBar";
 import { NavRail } from "./NavRail";
@@ -131,6 +132,8 @@ export function StudioShell() {
               />
             ) : activeView === "intent" ? (
               <IntentKernelView graph={graph} onPatch={applyPatch} />
+            ) : activeView === "loops" ? (
+              <ValueLoopsView graph={graph} onPatch={applyPatch} />
             ) : (
               <ViewStub title={view.title} />
             )}
