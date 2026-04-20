@@ -10,12 +10,6 @@ export type CopilotClient = {
     passPrompt: string;
     maxTokens?: number;
     signal?: AbortSignal;
-    /**
-     * When true, pre-fill the assistant turn with "{" so the model emits a
-     * single raw JSON object (no fences, no preamble). Callers re-prepend "{"
-     * to the returned text.
-     */
-    jsonPrefill?: boolean;
   }) => Promise<{ text: string; raw: Anthropic.Message }>;
 };
 
@@ -33,17 +27,7 @@ export const createCopilot = (opts?: {
   const model = opts?.model ?? DEFAULT_MODEL;
 
   return {
-    async complete({ userPrompt, passPrompt, maxTokens = 2048, signal, jsonPrefill }) {
-      const messages: Anthropic.MessageParam[] = [
-        {
-          role: "user",
-          content: `${passPrompt}\n\n---\nUser input:\n${userPrompt}`,
-        },
-      ];
-      if (jsonPrefill) {
-        messages.push({ role: "assistant", content: "{" });
-      }
-
+    async complete({ userPrompt, passPrompt, maxTokens = 2048, signal }) {
       const raw = await client.messages.create(
         {
           model,
@@ -55,17 +39,21 @@ export const createCopilot = (opts?: {
               cache_control: { type: "ephemeral" },
             } as unknown as Anthropic.TextBlockParam,
           ],
-          messages,
+          messages: [
+            {
+              role: "user",
+              content: `${passPrompt}\n\n---\nUser input:\n${userPrompt}`,
+            },
+          ],
         },
         signal ? { signal } : undefined
       );
 
-      const body = raw.content
+      const text = raw.content
         .filter((b): b is Anthropic.TextBlock => b.type === "text")
         .map((b) => b.text)
         .join("\n");
 
-      const text = jsonPrefill ? `{${body}` : body;
       return { text, raw };
     },
   };

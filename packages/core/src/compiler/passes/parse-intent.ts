@@ -66,7 +66,6 @@ export const parseIntent: Pass = async (ctx) => {
     userPrompt: ctx.userPrompt,
     passPrompt: PARSE_INTENT_PROMPT,
     maxTokens: 4096,
-    jsonPrefill: true,
     ...(ctx.signal ? { signal: ctx.signal } : {}),
   };
   const { text } = await copilot.complete(completeArgs);
