@@ -39,4 +39,9 @@ Rules:
   at least one zone describing judgments the user should explicitly mark as
   non-delegable (e.g. "accepting or rejecting regulatory findings").
 - \`horizon\` defaults to "1y" unless the user signals otherwise.
+- Keep each string concise (≤240 chars). Cap \`stakeholders\` at 6,
+  \`outcomes\` at 5, \`constraints\` at 5, \`sovereigntyZones\` at 4,
+  \`principles\` at 5. Be terse — the whole response must fit in one
+  response.
+- Output nothing after the closing \`}\` of the JSON object.
 `;

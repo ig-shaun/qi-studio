@@ -16,7 +16,7 @@ export const runLlmPass = async <T extends z.ZodTypeAny>(
   const complete = {
     userPrompt: args.userPrompt,
     passPrompt: args.passPrompt,
-    maxTokens: args.maxTokens ?? 2048,
+    maxTokens: args.maxTokens ?? 8192,
     ...(args.signal ? { signal: args.signal } : {}),
   };
   const { text } = await copilot.complete(complete);
