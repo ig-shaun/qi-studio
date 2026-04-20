@@ -45,6 +45,7 @@ export function GenerateModal({ onResult, onClose }: Props) {
       onResult(json);
       onClose();
     } catch (err) {
+      console.error("[compile] request failed:", err);
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);

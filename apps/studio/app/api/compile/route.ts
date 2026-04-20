@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { compileIntent, emptyGraph, validateGraph } from "@ixo-studio/core";
+import {
+  compileIntent,
+  emptyGraph,
+  validateGraph,
+  CopilotOutputError,
+} from "@ixo-studio/core";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -19,6 +24,10 @@ export async function POST(req: Request) {
     const violations = validateGraph(graph);
     return NextResponse.json({ graph, results, violations });
   } catch (err) {
+    console.error("[api/compile] failed:", err);
+    if (err instanceof CopilotOutputError) {
+      console.error("[api/compile] raw copilot output:\n", err.raw);
+    }
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
