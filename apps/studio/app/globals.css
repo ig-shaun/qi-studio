@@ -1145,3 +1145,88 @@ button {
   border-radius: var(--radius-lg);
   background: var(--paper-1);
 }
+
+/* ---------------------------------------------------------------- */
+/* POD cards + cognitive-load gauge                                  */
+/* ---------------------------------------------------------------- */
+
+.pod-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  background: var(--paper-0);
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-lg);
+  position: relative;
+}
+
+.pod-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+  background: var(--line-2);
+}
+
+.pod-card[data-pod-type="stream-aligned"]::before {
+  background: color-mix(in oklch, var(--accent) 75%, transparent);
+}
+
+.pod-card[data-pod-type="platform"]::before {
+  background: color-mix(in oklch, var(--violet) 75%, transparent);
+}
+
+.pod-card[data-pod-type="enabling"]::before {
+  background: color-mix(in oklch, var(--sage) 75%, transparent);
+}
+
+.pod-card[data-pod-type="complicated-subsystem"]::before {
+  background: color-mix(in oklch, var(--amber) 75%, transparent);
+}
+
+.pod-card--overloaded {
+  border-color: color-mix(in oklch, var(--coral) 45%, var(--line-1));
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--coral) 20%, transparent);
+}
+
+.pod-card__header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.pod-gauge {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--paper-1);
+  border: 1px solid var(--line-1);
+}
+
+.pod-gauge__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.pod-gauge__track {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--paper-3);
+  overflow: hidden;
+}
+
+.pod-gauge__fill {
+  height: 100%;
+  background: color-mix(in oklch, var(--accent) 70%, var(--paper-3));
+  transition: width var(--t-fast);
+}
+
+.pod-gauge__fill--alert {
+  background: var(--coral);
+}
