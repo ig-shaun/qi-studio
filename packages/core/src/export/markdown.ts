@@ -59,7 +59,9 @@ export const renderWorkspaceMarkdown = ({
   if (violations.length) {
     out.push(`## Invariant violations`, "");
     for (const v of violations) {
-      out.push(`- **[${v.severity.toUpperCase()}] ${v.code}** — ${v.message}`);
+      out.push(
+        `- **[${v.severity.toUpperCase()}] ${v.code}** — ${resolveIdsIn(v.message, graph)}`
+      );
     }
     out.push("");
   }
@@ -253,3 +255,28 @@ export const renderWorkspaceMarkdown = ({
 };
 
 const plural = (n: number) => (n === 1 ? "" : "s");
+
+// Replace any `kind_xxxxxx` node ID embedded in a string with the node's
+// human-readable label. Defensive — invariant messages are already being
+// rewritten to use names, but any other upstream message that leaks an ID
+// gets cleaned here too.
+const resolveIdsIn = (text: string, graph: Graph): string =>
+  text.replace(
+    /\b(pod|role|loop|intent|checkpoint|policy|deleg|cp|pol|out|con|sov|stk|prn|edge)_[A-Za-z0-9_-]+/g,
+    (id) => {
+      const node = graph.nodes[id];
+      if (!node) return id;
+      switch (node.kind) {
+        case "intent":
+          return `"${node.purpose}"`;
+        case "valueLoop":
+        case "pod":
+        case "role":
+        case "checkpoint":
+        case "policy":
+          return `"${node.name}"`;
+        case "delegation":
+          return `"${node.mandate || id}"`;
+      }
+    }
+  );

@@ -94,10 +94,12 @@ export const validateGraph = (graph: Graph): InvariantViolation[] => {
     if (edge.kind !== "interaction") continue;
     if (edge.mode === "collaboration" || edge.mode === "facilitation") {
       if (!edge.reviewDate || !edge.exitCriteria) {
+        const fromName = nodeLabel(graph, edge.from);
+        const toName = nodeLabel(graph, edge.to);
         violations.push({
           code: "edge.open-ended-coordination",
           severity: "error",
-          message: `Interaction edge (${edge.mode}) between ${edge.from} and ${edge.to} lacks review date or exit criteria.`,
+          message: `Interaction edge (${edge.mode}) between "${fromName}" and "${toName}" lacks review date or exit criteria.`,
           nodeIds: [edge.from, edge.to],
         });
       }
@@ -145,3 +147,23 @@ export const validateGraph = (graph: Graph): InvariantViolation[] => {
 
 export const hasBlockingViolations = (violations: InvariantViolation[]): boolean =>
   violations.some((v) => v.severity === "error");
+
+// Resolve a node ID to its human-readable label, matching the convention used
+// elsewhere (intent purpose, POD/role/loop name, delegation mandate). Falls
+// back to the raw ID when the node is missing or has no obvious label.
+const nodeLabel = (graph: Graph, id: NodeId): string => {
+  const n = graph.nodes[id];
+  if (!n) return id;
+  switch (n.kind) {
+    case "intent":
+      return n.purpose;
+    case "valueLoop":
+    case "pod":
+    case "role":
+    case "checkpoint":
+    case "policy":
+      return n.name;
+    case "delegation":
+      return n.mandate || id;
+  }
+};
