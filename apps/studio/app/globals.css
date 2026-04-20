@@ -546,6 +546,10 @@ button {
   stroke-width: 3px;
 }
 
+.sector-label--faded {
+  opacity: 0.45;
+}
+
 .sector-label--center {
   font-family: var(--font-serif);
   font-size: 18px;

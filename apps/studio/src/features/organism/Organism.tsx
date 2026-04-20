@@ -127,16 +127,22 @@ export function Organism({ graph, selectedId, onSelect }: Props) {
             const arc = n.endAngle - n.startAngle;
             const isSelected = n.id === selectedId;
             const faded = !!selectedId && !ancestors.has(n.id);
-            if (faded) return null;
             const minArc = n.ring === "def" ? 0.10 : 0.05;
             if (arc < minArc) return null;
             const pos = sectorLabelPosition(n);
             const fontSize =
               n.ring === "objective" ? 17 : n.ring === "pod" ? 14 : 12;
+            const className = [
+              "sector-label",
+              isSelected && "sector-label--selected",
+              faded && "sector-label--faded",
+            ]
+              .filter(Boolean)
+              .join(" ");
             return (
               <text
                 key={`label-${n.id}`}
-                className={`sector-label${isSelected ? " sector-label--selected" : ""}`}
+                className={className}
                 x={pos.x}
                 y={pos.y}
                 textAnchor="middle"
