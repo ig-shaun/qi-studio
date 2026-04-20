@@ -1,141 +1,150 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Graph } from "@ixo-studio/core/schema";
 import type { InvariantViolation } from "@ixo-studio/core/store";
 import { emptyGraph } from "@ixo-studio/core/schema";
-import { Constellation } from "../constellation/Constellation";
+import { Organism } from "../organism/Organism";
 import { Inspector } from "../inspector/Inspector";
-import { CompilePanel } from "../compile/CompilePanel";
+import { GenerateModal } from "../compile/GenerateModal";
+import { ViewStub } from "../views/ViewStub";
+import { CommandBar } from "./CommandBar";
+import { NavRail } from "./NavRail";
+import { VIEWS, type ViewId } from "./views";
+
+const NAV_STATE_KEY = "qi.navExpanded";
 
 export function StudioShell() {
   const [graph, setGraph] = useState<Graph>(emptyGraph());
   const [violations, setViolations] = useState<InvariantViolation[]>([]);
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
+  const [activeView, setActiveView] = useState<ViewId>("organism");
+  const [navExpanded, setNavExpanded] = useState<boolean>(false);
+  const [modal, setModal] = useState<null | "generate">(null);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(NAV_STATE_KEY);
+    if (stored === "1") setNavExpanded(true);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(NAV_STATE_KEY, navExpanded ? "1" : "0");
+  }, [navExpanded]);
 
   const hasGraph = Object.keys(graph.nodes).length > 0;
+  const view = VIEWS.find((v) => v.id === activeView) ?? VIEWS[1]!;
+  const errorCount = violations.filter((v) => v.severity === "error").length;
+  const warningCount = violations.filter((v) => v.severity === "warning").length;
 
   return (
-    <main style={shellStyle}>
-      <header style={headerStyle}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: "1.25rem" }}>IXO Studio</h1>
-          <p style={{ margin: 0, color: "#94a3b8", fontSize: 12 }}>
-            Intent compiler and governance simulator — design-time only
-          </p>
-        </div>
-        {hasGraph && (
-          <ViolationBadge violations={violations} />
-        )}
-      </header>
-      <div style={layoutStyle}>
-        <CompilePanel
+    <div className="app-shell">
+      <CommandBar
+        workspaceName="AI-native operating model"
+        onGenerate={() => setModal("generate")}
+      />
+
+      <div className="app-grid" data-nav={navExpanded ? "expanded" : "collapsed"}>
+        <NavRail
+          active={activeView}
+          onSelect={(id) => {
+            setActiveView(id);
+            setSelectedId(undefined);
+          }}
+          expanded={navExpanded}
+          onToggle={() => setNavExpanded((x) => !x)}
+        />
+
+        <main className="canvas-panel">
+          <header className="canvas-panel__header">
+            <div className="canvas-panel__headline">
+              <div className="eyebrow">{view.eyebrow}</div>
+              <h2>{view.title}</h2>
+              <p className="canvas-panel__subtitle">{view.subtitle}</p>
+            </div>
+            <div className="view-meta">
+              {hasGraph && (
+                <span
+                  className={`meta-pill ${
+                    errorCount
+                      ? "meta-pill--status-alert"
+                      : warningCount
+                      ? ""
+                      : "meta-pill--status-ok"
+                  }`}
+                >
+                  <span className="meta-pill__label">Invariants</span>
+                  <span className="meta-pill__value">
+                    {errorCount === 0 && warningCount === 0
+                      ? "clean"
+                      : `${errorCount} err · ${warningCount} warn`}
+                  </span>
+                </span>
+              )}
+              {hasGraph && (
+                <span className="meta-pill">
+                  <span className="meta-pill__label">Nodes</span>
+                  <span className="meta-pill__value">
+                    {Object.keys(graph.nodes).length}
+                  </span>
+                </span>
+              )}
+            </div>
+          </header>
+
+          <section className="canvas-panel__content">
+            {!hasGraph ? (
+              <EmptyState onGenerate={() => setModal("generate")} />
+            ) : activeView === "organism" ? (
+              <Organism
+                graph={graph}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+              />
+            ) : (
+              <ViewStub title={view.title} />
+            )}
+          </section>
+        </main>
+
+        <Inspector graph={graph} selectedId={selectedId} />
+      </div>
+
+      {modal === "generate" && (
+        <GenerateModal
           onResult={({ graph, violations }) => {
             setGraph(graph);
             setViolations(violations);
             setSelectedId(undefined);
+            setActiveView("organism");
           }}
+          onClose={() => setModal(null)}
         />
-        <div style={canvasStyle}>
-          {hasGraph ? (
-            <Constellation
-              graph={graph}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-            />
-          ) : (
-            <EmptyState />
-          )}
-        </div>
-        <Inspector
-          graph={graph}
-          selectedId={selectedId}
-          onClose={() => setSelectedId(undefined)}
-        />
-      </div>
-    </main>
-  );
-}
-
-function ViolationBadge({ violations }: { violations: InvariantViolation[] }) {
-  const errors = violations.filter((v) => v.severity === "error").length;
-  const warnings = violations.filter((v) => v.severity === "warning").length;
-  if (errors === 0 && warnings === 0) {
-    return (
-      <span style={{ ...badgeStyle, background: "#064e3b", color: "#bbf7d0" }}>
-        invariants clean
-      </span>
-    );
-  }
-  return (
-    <span style={{ ...badgeStyle, background: errors ? "#450a0a" : "#422006", color: errors ? "#fecaca" : "#fde68a" }}>
-      {errors} error{errors === 1 ? "" : "s"} · {warnings} warning
-      {warnings === 1 ? "" : "s"}
-    </span>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div style={emptyStyle}>
-      <h2 style={{ fontSize: "1rem", margin: 0, color: "#cbd5f5" }}>
-        No graph yet.
-      </h2>
-      <p style={{ color: "#94a3b8", fontSize: 13, maxWidth: 420, textAlign: "center" }}>
-        Write an intent prompt on the left and hit Compile. Claude will parse it into an Intent Kernel and unfold value loops, PODs, roles, delegation contracts, and governance checkpoints onto the Living Constellation.
-      </p>
+      )}
     </div>
   );
 }
 
-const shellStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  height: "100vh",
-  padding: "1rem",
-  gap: "1rem",
-  background: "#0b0d10",
-  color: "#e6e8eb",
-};
-
-const headerStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: "1rem",
-};
-
-const layoutStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "minmax(320px, 1fr) 3fr minmax(320px, 1fr)",
-  gap: "1rem",
-  flex: 1,
-  minHeight: 0,
-};
-
-const canvasStyle: React.CSSProperties = {
-  background: "#0f172a",
-  border: "1px solid #1f2937",
-  borderRadius: 12,
-  minHeight: 480,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  overflow: "hidden",
-};
-
-const emptyStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: "0.5rem",
-  padding: "2rem",
-};
-
-const badgeStyle: React.CSSProperties = {
-  padding: "0.25rem 0.6rem",
-  borderRadius: 999,
-  fontSize: 11,
-  letterSpacing: 1,
-  textTransform: "uppercase",
-};
+function EmptyState({ onGenerate }: { onGenerate: () => void }) {
+  return (
+    <div className="canvas-empty">
+      <div className="canvas-empty__card">
+        <div className="eyebrow">No organism yet</div>
+        <h3 className="canvas-empty__title">Start from intent.</h3>
+        <p className="canvas-empty__body">
+          Describe the purpose, outcomes, and sovereignty zones of the
+          organization. Claude will unfold the operating model onto the
+          canvas.
+        </p>
+        <button
+          type="button"
+          className="button button--primary"
+          onClick={onGenerate}
+          style={{ marginTop: 8 }}
+        >
+          <span className="button__dot" />
+          Generate with AI
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -1,75 +1,172 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { Graph, Node } from "@ixo-studio/core/schema";
 
 type Props = {
   graph: Graph;
   selectedId?: string | undefined;
-  onClose: () => void;
 };
 
-export function Inspector({ graph, selectedId, onClose }: Props) {
+export function Inspector({ graph, selectedId }: Props) {
   const node: Node | undefined = selectedId ? graph.nodes[selectedId] : undefined;
 
-  if (!node) {
+  if (!node) return <OverviewInspector graph={graph} />;
+
+  return (
+    <aside className="inspector-panel">
+      <NodeInspector node={node} graph={graph} />
+    </aside>
+  );
+}
+
+function OverviewInspector({ graph }: { graph: Graph }) {
+  const intent = Object.values(graph.nodes).find((n) => n.kind === "intent");
+  const loops = Object.values(graph.nodes).filter((n) => n.kind === "valueLoop");
+  const pods = Object.values(graph.nodes).filter((n) => n.kind === "pod");
+  const roles = Object.values(graph.nodes).filter((n) => n.kind === "role");
+  const delegations = Object.values(graph.nodes).filter(
+    (n) => n.kind === "delegation"
+  );
+  const checkpoints = Object.values(graph.nodes).filter(
+    (n) => n.kind === "checkpoint"
+  );
+
+  if (!intent) {
     return (
-      <aside style={panelStyle}>
-        <p style={{ color: "#94a3b8", margin: 0 }}>
-          Select a node to inspect its fields.
-        </p>
+      <aside className="inspector-panel">
+        <Section title="Select a node">
+          <p className="inspector-lead">
+            Run Generate with AI to compile an intent, then click any sector on
+            the organism to inspect it.
+          </p>
+        </Section>
       </aside>
     );
   }
 
   return (
-    <aside style={panelStyle}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <strong style={{ textTransform: "uppercase", letterSpacing: 1, fontSize: 11, color: "#94a3b8" }}>
-          {node.kind}
-        </strong>
-        <button onClick={onClose} style={closeButtonStyle}>close</button>
-      </header>
-      <NodeBody node={node} graph={graph} />
+    <aside className="inspector-panel">
+      <Section title="Overview">
+        <div className="eyebrow">Intent</div>
+        <p className="inspector-lead">{intent.purpose}</p>
+      </Section>
+      <Section title="Composition">
+        <Field label="Value loops">{loops.length}</Field>
+        <Field label="PODs">{pods.length}</Field>
+        <Field label="Roles">{roles.length}</Field>
+        <Field label="Delegations">{delegations.length}</Field>
+        <Field label="Checkpoints">{checkpoints.length}</Field>
+      </Section>
+      <Section title="Sovereignty zones">
+        {intent.sovereigntyZones.length === 0 ? (
+          <p className="inspector-lead">None declared.</p>
+        ) : (
+          <ul className="inspector-list">
+            {intent.sovereigntyZones.map((z) => (
+              <li key={z.id}>
+                <strong>{z.name}.</strong> {z.description}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
     </aside>
   );
 }
 
-function NodeBody({ node, graph }: { node: Node; graph: Graph }) {
+function NodeInspector({ node, graph }: { node: Node; graph: Graph }) {
   switch (node.kind) {
     case "intent":
       return (
-        <section>
-          <h2 style={h2Style}>{node.purpose}</h2>
-          <Field label="Horizon">{node.horizon}</Field>
-          <Field label="Adaptability">{node.adaptabilityTarget}</Field>
-          <List label="Outcomes" items={node.outcomes.map((o) => o.statement)} />
-          <List
-            label="Sovereignty zones"
-            items={node.sovereigntyZones.map((z) => `${z.name} — ${z.description}`)}
-          />
-          <List label="Principles" items={node.principles.map((p) => p.statement)} />
-          <List
-            label="Constraints"
-            items={node.constraints.map((c) => `[${c.kind}] ${c.statement}`)}
-          />
-        </section>
+        <>
+          <Section title={node.purpose}>
+            <div className="eyebrow">Intent Kernel</div>
+          </Section>
+          <Section title="Horizon">
+            <Field label="Time horizon">{node.horizon}</Field>
+            <Field label="Adaptability">{node.adaptabilityTarget}</Field>
+          </Section>
+          <Section title="Outcomes">
+            <ul className="inspector-list">
+              {node.outcomes.map((o) => (
+                <li key={o.id}>{o.statement}</li>
+              ))}
+            </ul>
+          </Section>
+          <Section title="Sovereignty zones">
+            <ul className="inspector-list">
+              {node.sovereigntyZones.map((z) => (
+                <li key={z.id}>
+                  <strong>{z.name}.</strong> {z.description}
+                </li>
+              ))}
+            </ul>
+          </Section>
+          <Section title="Principles">
+            <ul className="inspector-list">
+              {node.principles.map((p) => (
+                <li key={p.id}>{p.statement}</li>
+              ))}
+            </ul>
+          </Section>
+          <Section title="Constraints">
+            <ul className="inspector-list">
+              {node.constraints.map((c) => (
+                <li key={c.id}>
+                  <span className="tag" style={{ marginRight: 8 }}>
+                    {c.kind}
+                  </span>
+                  {c.statement}
+                </li>
+              ))}
+            </ul>
+          </Section>
+        </>
       );
     case "valueLoop":
       return (
-        <section>
-          <h2 style={h2Style}>{node.name}</h2>
-          <p style={{ color: "#cbd5f5", marginTop: 0 }}>{node.purpose}</p>
-          <Field label="Criticality">{node.criticality}</Field>
-          {node.requiredLatency && <Field label="Latency">{node.requiredLatency}</Field>}
-          <List label="Triggers" items={node.triggerSignals} />
-          <List label="Outputs" items={node.outputs} />
-        </section>
+        <>
+          <Section title={node.name}>
+            <div className="eyebrow">Value loop</div>
+            <p className="inspector-lead">{node.purpose}</p>
+          </Section>
+          <Section title="Operating">
+            <Field label="Criticality">
+              <span className={`tag${node.criticality === "high" ? " tag--alert" : ""}`}>
+                {node.criticality}
+              </span>
+            </Field>
+            {node.requiredLatency && (
+              <Field label="Latency">{node.requiredLatency}</Field>
+            )}
+          </Section>
+          {node.triggerSignals.length > 0 && (
+            <Section title="Triggers">
+              <ul className="inspector-list">
+                {node.triggerSignals.map((t, i) => (
+                  <li key={i}>{t}</li>
+                ))}
+              </ul>
+            </Section>
+          )}
+          {node.outputs.length > 0 && (
+            <Section title="Outputs">
+              <ul className="inspector-list">
+                {node.outputs.map((o, i) => (
+                  <li key={i}>{o}</li>
+                ))}
+              </ul>
+            </Section>
+          )}
+        </>
       );
     case "pod": {
       const load = node.accountabilities.reduce(
         (sum, a) => sum + (a.complexityWeight ?? 1),
         0
       );
+      const overloaded = load > node.cognitiveLoadBudget;
       const humans = node.humanRoleIds
         .map((id) => graph.nodes[id])
         .filter((n): n is Extract<Node, { kind: "role" }> => !!n && n.kind === "role");
@@ -77,90 +174,189 @@ function NodeBody({ node, graph }: { node: Node; graph: Graph }) {
         .map((id) => graph.nodes[id])
         .filter((n): n is Extract<Node, { kind: "role" }> => !!n && n.kind === "role");
       return (
-        <section>
-          <h2 style={h2Style}>{node.name}</h2>
-          <p style={{ color: "#cbd5f5", marginTop: 0 }}>{node.purpose}</p>
-          <Field label="Team Topologies type">{node.podType}</Field>
-          <Field label="Cognitive load">
-            {load} / {node.cognitiveLoadBudget}
-            {load > node.cognitiveLoadBudget ? " ⚠ overload" : ""}
-          </Field>
-          <List
-            label="Accountabilities"
-            items={node.accountabilities.map(
-              (a) => `${a.statement} (weight ${a.complexityWeight})`
-            )}
-          />
-          <List label="Human roles" items={humans.map((r) => r.name)} />
-          <List
-            label="Agent roles"
-            items={agents.map((r) => `${r.name} (${r.agentClass ?? "?"})`)}
-          />
-          <List label="Local decisions" items={node.localDecisions} />
-          <List label="Escalated decisions" items={node.escalatedDecisions} />
-        </section>
+        <>
+          <Section title={node.name}>
+            <div className="eyebrow">POD — {node.podType}</div>
+            <p className="inspector-lead">{node.purpose}</p>
+          </Section>
+          <Section title="Cognitive load">
+            <Field label="Load / budget">
+              <span className={overloaded ? "tag tag--alert" : "tag"}>
+                {load} / {node.cognitiveLoadBudget}
+                {overloaded ? " — overload" : ""}
+              </span>
+            </Field>
+          </Section>
+          {node.accountabilities.length > 0 && (
+            <Section title="Accountabilities">
+              <ul className="inspector-list">
+                {node.accountabilities.map((a) => (
+                  <li key={a.id}>
+                    {a.statement}
+                    <span className="tag" style={{ marginLeft: 8 }}>
+                      w{a.complexityWeight}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
+          {humans.length > 0 && (
+            <Section title="Human roles">
+              <ul className="inspector-list">
+                {humans.map((r) => (
+                  <li key={r.id}>{r.name}</li>
+                ))}
+              </ul>
+            </Section>
+          )}
+          {agents.length > 0 && (
+            <Section title="Agent roles">
+              <ul className="inspector-list">
+                {agents.map((r) => (
+                  <li key={r.id}>
+                    {r.name}
+                    {r.agentClass && (
+                      <span className="tag" style={{ marginLeft: 8 }}>
+                        {r.agentClass}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
+          {node.localDecisions.length > 0 && (
+            <Section title="Local decisions">
+              <ul className="inspector-list">
+                {node.localDecisions.map((d, i) => (
+                  <li key={i}>{d}</li>
+                ))}
+              </ul>
+            </Section>
+          )}
+          {node.escalatedDecisions.length > 0 && (
+            <Section title="Escalated decisions">
+              <ul className="inspector-list">
+                {node.escalatedDecisions.map((d, i) => (
+                  <li key={i}>{d}</li>
+                ))}
+              </ul>
+            </Section>
+          )}
+        </>
       );
     }
     case "role":
       return (
-        <section>
-          <h2 style={h2Style}>{node.name}</h2>
-          <Field label="Class">
-            {node.class}
-            {node.agentClass ? ` / ${node.agentClass}` : ""}
-          </Field>
-          <p style={{ color: "#cbd5f5" }}>{node.purpose}</p>
-          <List label="Accountabilities" items={node.accountabilities} />
-          <List label="Decision rights" items={node.decisionRights} />
-        </section>
+        <>
+          <Section title={node.name}>
+            <div className="eyebrow">Role — {node.class}{node.agentClass ? ` · ${node.agentClass}` : ""}</div>
+            <p className="inspector-lead">{node.purpose}</p>
+          </Section>
+          {node.accountabilities.length > 0 && (
+            <Section title="Accountabilities">
+              <ul className="inspector-list">
+                {node.accountabilities.map((a, i) => (
+                  <li key={i}>{a}</li>
+                ))}
+              </ul>
+            </Section>
+          )}
+          {node.decisionRights.length > 0 && (
+            <Section title="Decision rights">
+              <ul className="inspector-list">
+                {node.decisionRights.map((d, i) => (
+                  <li key={i}>{d}</li>
+                ))}
+              </ul>
+            </Section>
+          )}
+        </>
       );
     case "delegation":
       return (
-        <section>
-          <h2 style={h2Style}>{node.mandate}</h2>
-          <Field label="Autonomy">{node.autonomyLevel}</Field>
-          <Field label="Supervisor">
-            {roleName(graph, node.supervisingHumanRoleId)}
-          </Field>
-          <Field label="Agent">{roleName(graph, node.delegatedAgentRoleId)}</Field>
-          {node.checkpointPolicyId && (
-            <Field label="Checkpoint">
-              {(graph.nodes[node.checkpointPolicyId] as Extract<Node, { kind: "checkpoint" }> | undefined)?.name ?? node.checkpointPolicyId}
+        <>
+          <Section title={node.mandate}>
+            <div className="eyebrow">Delegation contract</div>
+          </Section>
+          <Section title="Autonomy">
+            <Field label="Level">
+              <span className="tag">{node.autonomyLevel}</span>
             </Field>
+            <Field label="Supervisor">{roleName(graph, node.supervisingHumanRoleId)}</Field>
+            <Field label="Agent">{roleName(graph, node.delegatedAgentRoleId)}</Field>
+            {node.checkpointPolicyId && (
+              <Field label="Checkpoint">
+                {checkpointName(graph, node.checkpointPolicyId)}
+              </Field>
+            )}
+          </Section>
+          {node.allowedActions.length > 0 && (
+            <Section title="Allowed">
+              <ul className="inspector-list">
+                {node.allowedActions.map((a, i) => (
+                  <li key={i}>{a}</li>
+                ))}
+              </ul>
+            </Section>
           )}
-          <List label="Allowed actions" items={node.allowedActions} />
-          <List label="Forbidden actions" items={node.forbiddenActions} />
-          <List
-            label="Tool access"
-            items={node.toolAccess.map((t) => `${t.tool} (${t.scope})`)}
-          />
-        </section>
+          {node.forbiddenActions.length > 0 && (
+            <Section title="Forbidden">
+              <ul className="inspector-list">
+                {node.forbiddenActions.map((a, i) => (
+                  <li key={i}>{a}</li>
+                ))}
+              </ul>
+            </Section>
+          )}
+        </>
       );
     case "checkpoint":
       return (
-        <section>
-          <h2 style={h2Style}>{node.name}</h2>
-          <Field label="Action scope">{node.actionScope}</Field>
-          <Field label="Reversibility">{node.reversibility}</Field>
-          <Field label="Requires human approval">
-            {node.requiresHumanApproval ? "yes" : "no"}
-          </Field>
-          {node.approverRoleId && (
-            <Field label="Approver">{roleName(graph, node.approverRoleId)}</Field>
-          )}
-          <Field label="Audit required">{node.auditRequired ? "yes" : "no"}</Field>
-        </section>
+        <>
+          <Section title={node.name}>
+            <div className="eyebrow">Checkpoint</div>
+          </Section>
+          <Section title="Control">
+            <Field label="Action scope">{node.actionScope}</Field>
+            <Field label="Reversibility">
+              <span
+                className={`tag${node.reversibility === "irreversible" ? " tag--alert" : ""}`}
+              >
+                {node.reversibility}
+              </span>
+            </Field>
+            <Field label="Human approval">
+              {node.requiresHumanApproval ? "Required" : "Not required"}
+            </Field>
+            {node.approverRoleId && (
+              <Field label="Approver">
+                {roleName(graph, node.approverRoleId)}
+              </Field>
+            )}
+            <Field label="Audit">{node.auditRequired ? "Required" : "—"}</Field>
+          </Section>
+        </>
       );
     case "policy":
       return (
-        <section>
-          <h2 style={h2Style}>{node.name}</h2>
-          <p style={{ color: "#cbd5f5", marginTop: 0 }}>{node.statement}</p>
-          <Field label="Enforcement">{node.enforcement}</Field>
-        </section>
+        <>
+          <Section title={node.name}>
+            <div className="eyebrow">Policy</div>
+            <p className="inspector-lead">{node.statement}</p>
+          </Section>
+          <Section title="Enforcement">
+            <Field label="Enforcement">
+              <span
+                className={`tag${node.enforcement === "blocking" ? " tag--alert" : ""}`}
+              >
+                {node.enforcement}
+              </span>
+            </Field>
+          </Section>
+        </>
       );
-    default:
-      return null;
   }
 }
 
@@ -169,56 +365,25 @@ function roleName(graph: Graph, id: string): string {
   return n && n.kind === "role" ? n.name : id;
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function checkpointName(graph: Graph, id: string): string {
+  const n = graph.nodes[id];
+  return n && n.kind === "checkpoint" ? n.name : id;
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div style={{ margin: "0.5rem 0" }}>
-      <div style={{ fontSize: 10, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>
-        {label}
-      </div>
-      <div style={{ color: "#e6e8eb" }}>{children}</div>
-    </div>
+    <section className="inspector-section">
+      <h3 className="inspector-section__title">{title}</h3>
+      {children}
+    </section>
   );
 }
 
-function List({ label, items }: { label: string; items: string[] }) {
-  if (!items || items.length === 0) return null;
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div style={{ margin: "0.75rem 0" }}>
-      <div style={{ fontSize: 10, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>
-        {label}
-      </div>
-      <ul style={{ margin: "0.25rem 0 0", paddingLeft: "1.1rem", color: "#cbd5f5" }}>
-        {items.map((it, i) => (
-          <li key={i}>{it}</li>
-        ))}
-      </ul>
+    <div className="inspector-field">
+      <span className="inspector-field__label">{label}</span>
+      <span className="inspector-field__value">{children}</span>
     </div>
   );
 }
-
-const panelStyle: React.CSSProperties = {
-  background: "#0f172a",
-  border: "1px solid #1f2937",
-  borderRadius: 12,
-  padding: "1rem",
-  minWidth: 320,
-  maxWidth: 420,
-  height: "100%",
-  overflow: "auto",
-};
-
-const h2Style: React.CSSProperties = {
-  margin: "0 0 0.5rem",
-  fontSize: "1.05rem",
-  color: "#f8fafc",
-};
-
-const closeButtonStyle: React.CSSProperties = {
-  background: "transparent",
-  border: "1px solid #334155",
-  color: "#94a3b8",
-  borderRadius: 6,
-  padding: "0.2rem 0.55rem",
-  cursor: "pointer",
-  fontSize: 11,
-};
