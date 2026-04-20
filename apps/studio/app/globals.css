@@ -1230,3 +1230,62 @@ button {
 .pod-gauge__fill--alert {
   background: var(--coral);
 }
+
+/* ---------------------------------------------------------------- */
+/* Role cards + class badges                                         */
+/* ---------------------------------------------------------------- */
+
+.role-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  background: var(--paper-0);
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-lg);
+}
+
+.role-card[data-role-class="human"] {
+  background: color-mix(in oklch, var(--amber) 4%, var(--paper-0));
+}
+
+.role-card[data-role-class="agent"] {
+  background: color-mix(in oklch, var(--violet) 5%, var(--paper-0));
+}
+
+.role-card[data-role-class="hybrid"] {
+  background: color-mix(in oklch, var(--sage) 4%, var(--paper-0));
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--line-1);
+  background: var(--paper-1);
+  color: var(--ink-2);
+  flex-shrink: 0;
+}
+
+.role-badge--human {
+  color: color-mix(in oklch, var(--amber) 50%, var(--ink-0));
+  border-color: color-mix(in oklch, var(--amber) 45%, var(--line-1));
+  background: color-mix(in oklch, var(--amber) 15%, var(--paper-1));
+}
+
+.role-badge--agent {
+  color: color-mix(in oklch, var(--violet) 55%, var(--ink-0));
+  border-color: color-mix(in oklch, var(--violet) 45%, var(--line-1));
+  background: color-mix(in oklch, var(--violet) 15%, var(--paper-1));
+}
+
+.role-badge--hybrid {
+  color: color-mix(in oklch, var(--sage) 55%, var(--ink-0));
+  border-color: color-mix(in oklch, var(--sage) 45%, var(--line-1));
+  background: color-mix(in oklch, var(--sage) 15%, var(--paper-1));
+}
