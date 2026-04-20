@@ -3,7 +3,7 @@ export const PARSE_INTENT_PROMPT = `Pass: parseIntent
 Turn the user's purpose statement into a structured IntentKernel draft for
 IXO Studio. You are NOT designing the organization yet — only capturing intent.
 
-Return exactly one fenced \`\`\`json block matching this shape:
+Return a single raw JSON object (no prose, no markdown fences) matching this shape:
 
 {
   "rationale": string,

@@ -4,7 +4,7 @@ Given an Intent Kernel, propose the minimum set of value-creation loops that
 must exist for the intent to stay alive. A value loop is a repeating cycle of
 sense -> decide -> act -> learn that produces a specific outcome.
 
-Return exactly one fenced \`\`\`json block:
+Return a single raw JSON object (no prose, no markdown fences):
 
 {
   "rationale": string,

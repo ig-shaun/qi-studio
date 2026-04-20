@@ -4,7 +4,7 @@ Given PODs and their roles, design Delegation Contracts that put agent roles
 to work under explicit human supervision. Treat this as a safety exercise,
 not an optimization one.
 
-Return exactly one fenced \`\`\`json block:
+Return a single raw JSON object (no prose, no markdown fences):
 
 {
   "rationale": string,

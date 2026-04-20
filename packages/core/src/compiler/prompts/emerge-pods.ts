@@ -5,7 +5,7 @@ constellation of PODs (autonomous human-agent teams) needed to sustain those
 loops. A POD maps to Team Topologies: stream-aligned, platform, enabling, or
 complicated-subsystem — exactly one type each.
 
-Return exactly one fenced \`\`\`json block:
+Return a single raw JSON object (no prose, no markdown fences):
 
 {
   "rationale": string,

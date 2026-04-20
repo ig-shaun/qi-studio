@@ -4,7 +4,7 @@ Given PODs and the Intent Kernel, break each POD's work into role bundles.
 Roles are capability-and-accountability clusters — NOT job titles. One person
 can fill many roles; one role can have many people.
 
-Return exactly one fenced \`\`\`json block:
+Return a single raw JSON object (no prose, no markdown fences):
 
 {
   "rationale": string,

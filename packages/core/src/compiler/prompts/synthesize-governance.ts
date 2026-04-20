@@ -5,7 +5,7 @@ Governance Policies needed so every act-with-approval or act-with-audit
 delegation is safely supervised. Follow the Singapore 2026 agentic-governance
 framing: boundaries by scope of action, reversibility, and autonomy.
 
-Return exactly one fenced \`\`\`json block:
+Return a single raw JSON object (no prose, no markdown fences):
 
 {
   "rationale": string,

@@ -10,6 +10,12 @@ export type CopilotClient = {
     passPrompt: string;
     maxTokens?: number;
     signal?: AbortSignal;
+    /**
+     * When true, pre-fill the assistant turn with "{" so the model emits a
+     * single raw JSON object (no fences, no preamble). Callers re-prepend "{"
+     * to the returned text.
+     */
+    jsonPrefill?: boolean;
   }) => Promise<{ text: string; raw: Anthropic.Message }>;
 };
 
@@ -27,7 +33,17 @@ export const createCopilot = (opts?: {
   const model = opts?.model ?? DEFAULT_MODEL;
 
   return {
-    async complete({ userPrompt, passPrompt, maxTokens = 2048, signal }) {
+    async complete({ userPrompt, passPrompt, maxTokens = 2048, signal, jsonPrefill }) {
+      const messages: Anthropic.MessageParam[] = [
+        {
+          role: "user",
+          content: `${passPrompt}\n\n---\nUser input:\n${userPrompt}`,
+        },
+      ];
+      if (jsonPrefill) {
+        messages.push({ role: "assistant", content: "{" });
+      }
+
       const raw = await client.messages.create(
         {
           model,
@@ -36,38 +52,62 @@ export const createCopilot = (opts?: {
             {
               type: "text",
               text: SYSTEM_PROMPT,
-              // Prompt caching — typed as any because the SDK's TextBlockParam
-              // in this version omits cache_control even though the API honors it.
               cache_control: { type: "ephemeral" },
             } as unknown as Anthropic.TextBlockParam,
           ],
-          messages: [
-            {
-              role: "user",
-              content: `${passPrompt}\n\n---\nUser input:\n${userPrompt}`,
-            },
-          ],
+          messages,
         },
         signal ? { signal } : undefined
       );
 
-      const text = raw.content
+      const body = raw.content
         .filter((b): b is Anthropic.TextBlock => b.type === "text")
         .map((b) => b.text)
         .join("\n");
 
+      const text = jsonPrefill ? `{${body}` : body;
       return { text, raw };
     },
   };
 };
 
 export const extractJsonBlock = (text: string): string => {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenced && fenced[1]) return fenced[1].trim();
-  // Fall back to the first balanced JSON object/array in the text.
-  const firstBrace = text.search(/[\[{]/);
-  if (firstBrace === -1) {
+  const start = text.search(/[\[{]/);
+  if (start === -1) {
     throw new CopilotOutputError("no JSON found in copilot output", text);
   }
-  return text.slice(firstBrace).trim();
+
+  const open = text[start]!;
+  const close = open === "{" ? "}" : "]";
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i]!;
+    if (inString) {
+      if (escape) {
+        escape = false;
+      } else if (ch === "\\") {
+        escape = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === open) depth++;
+    else if (ch === close) {
+      depth--;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+
+  throw new CopilotOutputError(
+    "JSON in copilot output was not balanced (likely truncated)",
+    text
+  );
 };
