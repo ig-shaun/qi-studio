@@ -15,6 +15,7 @@ import { IntentKernelView } from "../intent/IntentKernelView";
 import { ValueLoopsView } from "../loops/ValueLoopsView";
 import { PodsView } from "../pods/PodsView";
 import { RolesView } from "../roles/RolesView";
+import { DelegationsView } from "../delegations/DelegationsView";
 import { ViewStub } from "../views/ViewStub";
 import { CommandBar } from "./CommandBar";
 import { NavRail } from "./NavRail";
@@ -140,6 +141,8 @@ export function StudioShell() {
               <PodsView graph={graph} onPatch={applyPatch} />
             ) : activeView === "roles" ? (
               <RolesView graph={graph} onPatch={applyPatch} />
+            ) : activeView === "agents" ? (
+              <DelegationsView graph={graph} onPatch={applyPatch} />
             ) : (
               <ViewStub title={view.title} />
             )}

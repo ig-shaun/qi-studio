@@ -1289,3 +1289,119 @@ button {
   border-color: color-mix(in oklch, var(--sage) 45%, var(--line-1));
   background: color-mix(in oklch, var(--sage) 15%, var(--paper-1));
 }
+
+/* ---------------------------------------------------------------- */
+/* Delegation cards + autonomy segmented control                     */
+/* ---------------------------------------------------------------- */
+
+.delegation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  background: var(--paper-0);
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-lg);
+  position: relative;
+}
+
+.delegation-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+  background: var(--line-2);
+}
+
+.delegation-card--assist::before {
+  background: color-mix(in oklch, var(--sage) 70%, transparent);
+}
+.delegation-card--recommend::before {
+  background: color-mix(in oklch, var(--accent) 70%, transparent);
+}
+.delegation-card--act-with-approval::before {
+  background: color-mix(in oklch, var(--amber) 70%, transparent);
+}
+.delegation-card--act-with-audit::before {
+  background: color-mix(in oklch, var(--coral) 70%, transparent);
+}
+
+.delegation-card--invalid {
+  border-color: color-mix(in oklch, var(--coral) 50%, var(--line-1));
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--coral) 22%, transparent);
+}
+
+.autonomy-segmented {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 3px;
+  background: var(--paper-1);
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-md);
+}
+
+.autonomy-segmented__btn {
+  padding: 7px 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast),
+    border-color var(--t-fast);
+}
+
+.autonomy-segmented__btn:hover {
+  background: var(--paper-2);
+}
+
+.autonomy-segmented__btn.is-active {
+  background: var(--paper-0);
+  color: var(--ink-0);
+  border-color: var(--line-2);
+}
+
+.autonomy-segmented__btn--assist.is-active {
+  background: color-mix(in oklch, var(--sage) 15%, var(--paper-0));
+  border-color: color-mix(in oklch, var(--sage) 50%, var(--line-2));
+}
+.autonomy-segmented__btn--recommend.is-active {
+  background: color-mix(in oklch, var(--accent) 15%, var(--paper-0));
+  border-color: color-mix(in oklch, var(--accent) 50%, var(--line-2));
+}
+.autonomy-segmented__btn--act-with-approval.is-active {
+  background: color-mix(in oklch, var(--amber) 18%, var(--paper-0));
+  border-color: color-mix(in oklch, var(--amber) 55%, var(--line-2));
+}
+.autonomy-segmented__btn--act-with-audit.is-active {
+  background: color-mix(in oklch, var(--coral) 18%, var(--paper-0));
+  border-color: color-mix(in oklch, var(--coral) 55%, var(--line-2));
+}
+
+.delegation-warnings {
+  list-style: none;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--coral) 12%, var(--paper-1));
+  border: 1px solid color-mix(in oklch, var(--coral) 35%, var(--line-1));
+  color: var(--ink-0);
+  font-size: 12.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delegation-warnings li::before {
+  content: "⚠ ";
+  color: var(--coral);
+}
