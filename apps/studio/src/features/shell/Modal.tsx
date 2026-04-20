@@ -38,7 +38,7 @@ export function Modal({ title, onClose, children }: Props) {
             <CloseIcon style={{ width: 12, height: 12 }} />
           </button>
         </header>
-        {children}
+        <div className="modal__body">{children}</div>
       </div>
     </div>
   );

@@ -116,9 +116,9 @@ export function Organism({ graph, selectedId, onSelect }: Props) {
                   key={`label-${n.id}`}
                   className="sector-label sector-label--center"
                   x={cx}
-                  y={cy + 4}
+                  y={cy + 5}
                   textAnchor="middle"
-                  fontSize={14}
+                  fontSize={18}
                 >
                   {n.label}
                 </text>
@@ -128,11 +128,11 @@ export function Organism({ graph, selectedId, onSelect }: Props) {
             const isSelected = n.id === selectedId;
             const faded = !!selectedId && !ancestors.has(n.id);
             if (faded) return null;
-            const minArc = n.ring === "def" ? 0.11 : 0.06;
+            const minArc = n.ring === "def" ? 0.10 : 0.05;
             if (arc < minArc) return null;
             const pos = sectorLabelPosition(n);
             const fontSize =
-              n.ring === "objective" ? 14 : n.ring === "pod" ? 12 : 10;
+              n.ring === "objective" ? 17 : n.ring === "pod" ? 14 : 12;
             return (
               <text
                 key={`label-${n.id}`}
@@ -156,6 +156,6 @@ export function Organism({ graph, selectedId, onSelect }: Props) {
 
 function truncateForArc(label: string, arc: number, radialDepth: number): string {
   // Rough character capacity estimate: arc length at mid radius / avg glyph width.
-  const capacity = Math.max(6, Math.floor((arc * (radialDepth * 0.55)) / 7));
+  const capacity = Math.max(6, Math.floor((arc * (radialDepth * 0.55)) / 8));
   return label.length <= capacity ? label : `${label.slice(0, capacity - 1)}…`;
 }
