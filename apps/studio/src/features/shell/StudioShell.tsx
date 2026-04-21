@@ -1,8 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Graph } from "@ixo-studio/core/schema";
-import type { GraphPatch, InvariantViolation } from "@ixo-studio/core/store";
+import type {
+  ChangelogEntry,
+  GraphPatch,
+  InvariantViolation,
+  Scenario,
+  ScenarioBundle,
+} from "@ixo-studio/core/store";
+import {
+  activeScenario as selectActiveScenario,
+  changelogEntryFromPatch,
+  emptyScenarioBundle,
+  TARGET_SCENARIO_ID,
+} from "@ixo-studio/core/store";
 import { emptyGraph } from "@ixo-studio/core/schema";
 import { applyPatchTo } from "@ixo-studio/core/compiler";
 import { validateGraph } from "@ixo-studio/core/store";
@@ -19,16 +31,26 @@ import { DelegationsView } from "../delegations/DelegationsView";
 import { QiFlowView } from "../flow/QiFlowView";
 import { GovernanceView } from "../governance/GovernanceView";
 import { FitnessView } from "../fitness/FitnessView";
+import { ChangelogView } from "../changelog/ChangelogView";
 import { ViewStub } from "../views/ViewStub";
 import { CommandBar } from "./CommandBar";
 import { NavRail } from "./NavRail";
+import { ScenarioSwitcher } from "./ScenarioSwitcher";
 import { VIEWS, type ViewId } from "./views";
 
 const NAV_STATE_KEY = "qi.navExpanded";
 const DEFAULT_WORKSPACE_NAME = "AI-native operating model";
 
+const randomId = (prefix: string): string => {
+  const suffix =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID().replace(/-/g, "").slice(0, 12)
+      : Math.random().toString(36).slice(2, 14);
+  return `${prefix}_${suffix}`;
+};
+
 export function StudioShell() {
-  const [graph, setGraph] = useState<Graph>(emptyGraph());
+  const [bundle, setBundle] = useState<ScenarioBundle>(() => emptyScenarioBundle());
   const [violations, setViolations] = useState<InvariantViolation[]>([]);
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
   const [activeView, setActiveView] = useState<ViewId>("organism");
@@ -38,8 +60,113 @@ export function StudioShell() {
     DEFAULT_WORKSPACE_NAME
   );
 
+  const active = useMemo(() => selectActiveScenario(bundle), [bundle]);
+  const graph: Graph = active.graph;
+
   const applyPatch = useCallback((patch: GraphPatch) => {
-    setGraph((g) => applyPatchTo(g, patch));
+    setBundle((cur) => {
+      const entry = changelogEntryFromPatch(patch);
+      return {
+        ...cur,
+        scenarios: cur.scenarios.map((s) =>
+          s.id === cur.activeScenarioId
+            ? {
+                ...s,
+                graph: applyPatchTo(s.graph, patch),
+                changelog: [...s.changelog, entry],
+                updatedAt: entry.timestamp,
+              }
+            : s
+        ),
+      };
+    });
+  }, []);
+
+  const setActiveScenario = useCallback((id: string) => {
+    setBundle((cur) =>
+      cur.activeScenarioId === id ? cur : { ...cur, activeScenarioId: id }
+    );
+    setSelectedId(undefined);
+  }, []);
+
+  const renameScenario = useCallback((id: string, name: string) => {
+    setBundle((cur) => ({
+      ...cur,
+      scenarios: cur.scenarios.map((s) =>
+        s.id === id ? { ...s, name, updatedAt: new Date().toISOString() } : s
+      ),
+    }));
+  }, []);
+
+  const addScenario = useCallback(({ name }: { name: string }) => {
+    setBundle((cur) => {
+      const now = new Date().toISOString();
+      const maxOrder = cur.scenarios.reduce((m, s) => Math.max(m, s.order), -1);
+      const id = randomId("scn");
+      const slug = slugify(name) || "custom";
+      const newScenario: Scenario = {
+        id,
+        name,
+        slug,
+        kind: "custom",
+        order: maxOrder + 1,
+        createdAt: now,
+        updatedAt: now,
+        graph: emptyGraph(),
+        changelog: [],
+      };
+      return {
+        ...cur,
+        scenarios: [...cur.scenarios, newScenario],
+        activeScenarioId: id,
+      };
+    });
+    setSelectedId(undefined);
+  }, []);
+
+  const duplicateActiveScenario = useCallback(() => {
+    setBundle((cur) => {
+      const source = cur.scenarios.find((s) => s.id === cur.activeScenarioId);
+      if (!source) return cur;
+      const now = new Date().toISOString();
+      const maxOrder = cur.scenarios.reduce((m, s) => Math.max(m, s.order), -1);
+      const id = randomId("scn");
+      const name = `${source.name} (copy)`;
+      const slug = slugify(name);
+      const newScenario: Scenario = {
+        id,
+        name,
+        slug,
+        kind: "custom",
+        order: maxOrder + 1,
+        createdAt: now,
+        updatedAt: now,
+        graph: structuredCloneSafe(source.graph),
+        changelog: [],
+      };
+      return {
+        ...cur,
+        scenarios: [...cur.scenarios, newScenario],
+        activeScenarioId: id,
+      };
+    });
+    setSelectedId(undefined);
+  }, []);
+
+  const removeScenario = useCallback((id: string) => {
+    setBundle((cur) => {
+      const target = cur.scenarios.find((s) => s.id === id);
+      if (!target || target.kind !== "custom") return cur;
+      const remaining = cur.scenarios.filter((s) => s.id !== id);
+      const nextActive =
+        cur.activeScenarioId === id
+          ? remaining.find((s) => s.id === TARGET_SCENARIO_ID)?.id ??
+            remaining[0]?.id ??
+            cur.activeScenarioId
+          : cur.activeScenarioId;
+      return { ...cur, scenarios: remaining, activeScenarioId: nextActive };
+    });
+    setSelectedId(undefined);
   }, []);
 
   useEffect(() => {
@@ -66,11 +193,20 @@ export function StudioShell() {
         workspaceName={workspaceName}
         onGenerate={() => setModal("generate")}
         {...(hasGraph ? { onExport: () => setModal("export") } : {})}
+        scenarioSlot={
+          <ScenarioSwitcher
+            bundle={bundle}
+            onSelect={setActiveScenario}
+            onAdd={addScenario}
+            onDuplicate={duplicateActiveScenario}
+            onRename={renameScenario}
+            onRemove={removeScenario}
+          />
+        }
         importSlot={
           <ImportButton
-            onImport={({ graph, violations, workspaceName: name }) => {
-              setGraph(graph);
-              setViolations(violations);
+            onImport={({ bundle: importedBundle, workspaceName: name }) => {
+              setBundle(importedBundle);
               setSelectedId(undefined);
               setActiveView("organism");
               if (name) setWorkspaceName(name);
@@ -128,7 +264,9 @@ export function StudioShell() {
           </header>
 
           <section className="canvas-panel__content">
-            {!hasGraph ? (
+            {activeView === "changelog" ? (
+              <ChangelogView scenario={active} />
+            ) : !hasGraph ? (
               <EmptyState onGenerate={() => setModal("generate")} />
             ) : activeView === "organism" ? (
               <Organism
@@ -163,9 +301,25 @@ export function StudioShell() {
 
       {modal === "generate" && (
         <GenerateModal
-          onResult={({ graph, violations }) => {
-            setGraph(graph);
-            setViolations(violations);
+          bundle={bundle}
+          onResult={({ graph: generatedGraph, targetScenarioId }) => {
+            setBundle((cur) => ({
+              ...cur,
+              activeScenarioId: targetScenarioId,
+              scenarios: cur.scenarios.map((s) =>
+                s.id === targetScenarioId
+                  ? {
+                      ...s,
+                      graph: generatedGraph,
+                      changelog: [
+                        ...s.changelog,
+                        buildCompilerChangelogEntry(generatedGraph),
+                      ],
+                      updatedAt: new Date().toISOString(),
+                    }
+                  : s
+              ),
+            }));
             setSelectedId(undefined);
             setActiveView("organism");
           }}
@@ -175,9 +329,11 @@ export function StudioShell() {
 
       {modal === "export" && (
         <ExportModal
-          graph={graph}
+          bundle={bundle}
           workspaceName={workspaceName}
-          violations={violations}
+          violationsByScenario={Object.fromEntries(
+            bundle.scenarios.map((s) => [s.id, validateGraph(s.graph)])
+          )}
           onClose={() => setModal(null)}
         />
       )}
@@ -209,3 +365,38 @@ function EmptyState({ onGenerate }: { onGenerate: () => void }) {
     </div>
   );
 }
+
+const slugify = (name: string): string =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+
+// Deep-clone the graph so edits to the copied scenario don't mutate the source
+// scenario's nodes. structuredClone is widely supported; fall back to JSON
+// for unlikely legacy environments.
+const structuredCloneSafe = <T,>(value: T): T => {
+  if (typeof structuredClone === "function") return structuredClone(value);
+  return JSON.parse(JSON.stringify(value)) as T;
+};
+
+const buildCompilerChangelogEntry = (g: Graph): ChangelogEntry => {
+  const nodeCount = Object.keys(g.nodes).length;
+  const edgeCount = Object.keys(g.edges).length;
+  return {
+    id: randomId("entry"),
+    timestamp: new Date().toISOString(),
+    source: "compiler",
+    rationale: "Generated from prompt",
+    summary: `added ${nodeCount} node${nodeCount === 1 ? "" : "s"} · ${edgeCount} edge${edgeCount === 1 ? "" : "s"}`,
+    opsCount: nodeCount + edgeCount,
+    opCounts: {
+      addNode: nodeCount,
+      updateNode: 0,
+      removeNode: 0,
+      addEdge: edgeCount,
+      removeEdge: 0,
+    },
+  };
+};

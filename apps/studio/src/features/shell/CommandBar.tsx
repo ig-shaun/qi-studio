@@ -9,6 +9,7 @@ type Props = {
   onStressTest?: () => void;
   onExport?: () => void;
   importSlot?: ReactNode;
+  scenarioSlot?: ReactNode;
 };
 
 export function CommandBar({
@@ -17,6 +18,7 @@ export function CommandBar({
   onStressTest,
   onExport,
   importSlot,
+  scenarioSlot,
 }: Props) {
   return (
     <header className="command-bar">
@@ -33,6 +35,8 @@ export function CommandBar({
         <span className="workspace-chip__value">{workspaceName}</span>
         <span className="workspace-chip__dot" aria-hidden />
       </div>
+
+      {scenarioSlot}
 
       <label className="search-field" aria-label="Search">
         <SearchIcon className="search-field__icon" />

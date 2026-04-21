@@ -1,19 +1,64 @@
 import type { Graph, Node } from "../schema/index.js";
 import type { InvariantViolation } from "../store/invariants.js";
+import type { ChangelogEntry, Scenario, ScenarioBundle } from "../store/scenario.js";
 
 export type MarkdownReportArgs = {
-  graph: Graph;
+  bundle: ScenarioBundle;
   workspaceName?: string;
   prompt?: string;
-  violations?: InvariantViolation[];
+  violationsByScenario?: Record<string, InvariantViolation[]>;
 };
 
 export const renderWorkspaceMarkdown = ({
-  graph,
+  bundle,
   workspaceName,
   prompt,
-  violations = [],
+  violationsByScenario = {},
 }: MarkdownReportArgs): string => {
+  const out: string[] = [];
+  const title = workspaceName ?? "Qi Studio Workspace";
+  out.push(`# ${title}`, "");
+  out.push(
+    `_Exported ${new Date().toISOString()} from Qi Studio — intent-first operating model._`,
+    ""
+  );
+
+  if (prompt) {
+    out.push(`**Generation prompt:**`, "", `> ${prompt.replace(/\n/g, "\n> ")}`, "");
+  }
+
+  const sorted = [...bundle.scenarios].sort((a, b) => a.order - b.order);
+
+  // Scenario table of contents.
+  out.push(`## Scenarios`, "");
+  out.push(`| # | Scenario | Nodes | Edges | Last edited |`);
+  out.push(`|---|---|---|---|---|`);
+  for (const [i, s] of sorted.entries()) {
+    const nodeCount = Object.keys(s.graph.nodes).length;
+    const edgeCount = Object.keys(s.graph.edges).length;
+    out.push(
+      `| ${i + 1} | ${s.name} | ${nodeCount} | ${edgeCount} | ${formatDate(
+        s.updatedAt
+      )} |`
+    );
+  }
+  out.push("");
+
+  for (const scenario of sorted) {
+    renderScenarioMarkdown(out, scenario, {
+      violations: violationsByScenario[scenario.id] ?? [],
+    });
+  }
+
+  return out.join("\n").trimEnd() + "\n";
+};
+
+const renderScenarioMarkdown = (
+  out: string[],
+  scenario: Scenario,
+  { violations }: { violations: InvariantViolation[] }
+) => {
+  const graph = scenario.graph;
   const intent = Object.values(graph.nodes).find(
     (n): n is Extract<Node, { kind: "intent" }> => n.kind === "intent"
   );
@@ -36,19 +81,20 @@ export const renderWorkspaceMarkdown = ({
     (n): n is Extract<Node, { kind: "policy" }> => n.kind === "policy"
   );
 
-  const out: string[] = [];
-  const title = intent?.purpose ?? workspaceName ?? "Qi Studio Workspace";
-  out.push(`# ${title}`, "");
+  out.push(`## ${scenario.name}`, "");
   out.push(
-    `_Exported ${new Date().toISOString()} from Qi Studio — intent-first operating model._`,
+    `_Scenario kind: ${scenario.kind} · ${Object.keys(graph.nodes).length} node${
+      Object.keys(graph.nodes).length === 1 ? "" : "s"
+    } · ${Object.keys(graph.edges).length} edge${
+      Object.keys(graph.edges).length === 1 ? "" : "s"
+    } · last edited ${formatDate(scenario.updatedAt)}._`,
     ""
   );
 
-  if (workspaceName && workspaceName !== title) {
-    out.push(`**Workspace:** ${workspaceName}`, "");
-  }
-  if (prompt) {
-    out.push(`**Generation prompt:**`, "", `> ${prompt.replace(/\n/g, "\n> ")}`, "");
+  if (Object.keys(graph.nodes).length === 0) {
+    out.push(`_This scenario is empty._`, "");
+    renderChangelogMarkdown(out, scenario.changelog);
+    return;
   }
 
   out.push(
@@ -57,7 +103,7 @@ export const renderWorkspaceMarkdown = ({
   );
 
   if (violations.length) {
-    out.push(`## Invariant violations`, "");
+    out.push(`### Invariant violations`, "");
     for (const v of violations) {
       out.push(
         `- **[${v.severity.toUpperCase()}] ${v.code}** — ${resolveIdsIn(v.message, graph)}`
@@ -67,14 +113,14 @@ export const renderWorkspaceMarkdown = ({
   }
 
   if (intent) {
-    out.push(`## Intent Kernel`, "");
+    out.push(`### Intent Kernel`, "");
     out.push(`- **Purpose:** ${intent.purpose}`);
     out.push(`- **Horizon:** ${intent.horizon}`);
     out.push(`- **Adaptability target:** ${intent.adaptabilityTarget}`);
     out.push("");
 
     if (intent.outcomes.length) {
-      out.push(`### Outcomes`, "");
+      out.push(`#### Outcomes`, "");
       for (const o of intent.outcomes) {
         out.push(`- ${o.statement}${o.metric ? ` _(metric: ${o.metric})_` : ""}`);
       }
@@ -82,7 +128,7 @@ export const renderWorkspaceMarkdown = ({
     }
 
     if (intent.sovereigntyZones.length) {
-      out.push(`### Sovereignty zones`, "");
+      out.push(`#### Sovereignty zones`, "");
       for (const z of intent.sovereigntyZones) {
         out.push(`- **${z.name}** — ${z.description}`);
       }
@@ -90,7 +136,7 @@ export const renderWorkspaceMarkdown = ({
     }
 
     if (intent.constraints.length) {
-      out.push(`### Constraints`, "");
+      out.push(`#### Constraints`, "");
       for (const c of intent.constraints) {
         out.push(`- _(${c.kind})_ ${c.statement}`);
       }
@@ -98,22 +144,22 @@ export const renderWorkspaceMarkdown = ({
     }
 
     if (intent.principles.length) {
-      out.push(`### Principles`, "");
+      out.push(`#### Principles`, "");
       for (const p of intent.principles) out.push(`- ${p.statement}`);
       out.push("");
     }
 
     if (intent.stakeholders.length) {
-      out.push(`### Stakeholders`, "");
+      out.push(`#### Stakeholders`, "");
       for (const s of intent.stakeholders) out.push(`- _(${s.kind})_ ${s.label}`);
       out.push("");
     }
   }
 
   if (loops.length) {
-    out.push(`## Value loops`, "");
+    out.push(`### Value loops`, "");
     for (const l of loops) {
-      out.push(`### ${l.name}`, "");
+      out.push(`#### ${l.name}`, "");
       out.push(`- **Purpose:** ${l.purpose}`);
       out.push(`- **Criticality:** ${l.criticality}`);
       if (l.requiredLatency) out.push(`- **Latency:** ${l.requiredLatency}`);
@@ -128,7 +174,7 @@ export const renderWorkspaceMarkdown = ({
   }
 
   if (pods.length) {
-    out.push(`## PODs`, "");
+    out.push(`### PODs`, "");
     for (const p of pods) {
       const load = p.accountabilities.reduce(
         (sum, a) => sum + (a.complexityWeight ?? 1),
@@ -136,7 +182,7 @@ export const renderWorkspaceMarkdown = ({
       );
       const overloaded = load > p.cognitiveLoadBudget;
       const loop = loops.find((l) => l.id === p.primaryLoopId);
-      out.push(`### ${p.name}`, "");
+      out.push(`#### ${p.name}`, "");
       out.push(`- **Type:** ${p.podType}`);
       if (loop) out.push(`- **Primary loop:** ${loop.name}`);
       out.push(`- **Purpose:** ${p.purpose}`);
@@ -183,10 +229,10 @@ export const renderWorkspaceMarkdown = ({
   }
 
   if (roles.length) {
-    out.push(`## Roles`, "");
+    out.push(`### Roles`, "");
     for (const r of roles) {
       const tag = r.agentClass ? `${r.class} · ${r.agentClass}` : r.class;
-      out.push(`### ${r.name} _(${tag})_`, "");
+      out.push(`#### ${r.name} _(${tag})_`, "");
       out.push(`- **Purpose:** ${r.purpose}`);
       if (r.accountabilities.length) {
         out.push("", `**Accountabilities**`);
@@ -201,12 +247,12 @@ export const renderWorkspaceMarkdown = ({
   }
 
   if (delegations.length) {
-    out.push(`## Delegation contracts`, "");
+    out.push(`### Delegation contracts`, "");
     for (const d of delegations) {
       const supervisor = roles.find((r) => r.id === d.supervisingHumanRoleId);
       const agent = roles.find((r) => r.id === d.delegatedAgentRoleId);
       const checkpoint = checkpoints.find((c) => c.id === d.checkpointPolicyId);
-      out.push(`### ${d.mandate}`, "");
+      out.push(`#### ${d.mandate}`, "");
       out.push(`- **Autonomy:** ${d.autonomyLevel}`);
       if (supervisor) out.push(`- **Supervising human:** ${supervisor.name}`);
       if (agent) out.push(`- **Delegated agent:** ${agent.name}`);
@@ -224,12 +270,12 @@ export const renderWorkspaceMarkdown = ({
   }
 
   if (checkpoints.length) {
-    out.push(`## Checkpoints`, "");
+    out.push(`### Checkpoints`, "");
     for (const c of checkpoints) {
       const approver = c.approverRoleId
         ? roles.find((r) => r.id === c.approverRoleId)
         : null;
-      out.push(`### ${c.name}`, "");
+      out.push(`#### ${c.name}`, "");
       out.push(`- **Action scope:** ${c.actionScope}`);
       out.push(`- **Reversibility:** ${c.reversibility}`);
       out.push(
@@ -242,19 +288,46 @@ export const renderWorkspaceMarkdown = ({
   }
 
   if (policies.length) {
-    out.push(`## Policies`, "");
+    out.push(`### Policies`, "");
     for (const p of policies) {
-      out.push(`### ${p.name}`, "");
+      out.push(`#### ${p.name}`, "");
       out.push(`- **Enforcement:** ${p.enforcement}`);
       out.push(`- ${p.statement}`);
       out.push("");
     }
   }
 
-  return out.join("\n").trimEnd() + "\n";
+  renderChangelogMarkdown(out, scenario.changelog);
+};
+
+const renderChangelogMarkdown = (out: string[], entries: ChangelogEntry[]) => {
+  out.push(`### Changelog`, "");
+  if (entries.length === 0) {
+    out.push(`_No activity yet._`, "");
+    return;
+  }
+  const sorted = [...entries].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+  for (const e of sorted) {
+    const when = formatDateTime(e.timestamp);
+    const rationale = e.rationale ? ` — ${e.rationale}` : "";
+    out.push(`- **${when}** · _${e.source}_ · ${e.summary}${rationale}`);
+  }
+  out.push("");
 };
 
 const plural = (n: number) => (n === 1 ? "" : "s");
+
+const formatDate = (iso: string): string => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toISOString().slice(0, 10);
+};
+
+const formatDateTime = (iso: string): string => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toISOString().slice(0, 16).replace("T", " ");
+};
 
 // Replace any `kind_xxxxxx` node ID embedded in a string with the node's
 // human-readable label. Defensive — invariant messages are already being

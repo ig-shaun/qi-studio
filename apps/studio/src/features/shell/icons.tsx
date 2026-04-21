@@ -95,10 +95,12 @@ export const icons: Record<ViewId, (p?: P) => JSX.Element> = {
       <circle cx="12" cy="5" r="0.8" fill="currentColor" stroke="none" />
     </svg>
   ),
-  plan: (p) => (
+  changelog: (p) => (
     <svg {...base} {...p}>
-      <path d="M2 15L7 9l3 3 6-8" />
-      <path d="M12 4h4v4" />
+      <rect x="2.5" y="2.5" width="13" height="13" rx="2" />
+      <path d="M5 6h8" />
+      <path d="M5 9h8" />
+      <path d="M5 12h5" />
     </svg>
   ),
 };

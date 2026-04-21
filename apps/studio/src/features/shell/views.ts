@@ -8,7 +8,7 @@ export type ViewId =
   | "flow"
   | "governance"
   | "fitness"
-  | "plan";
+  | "changelog";
 
 export type ViewDef = {
   id: ViewId;
@@ -85,10 +85,10 @@ export const VIEWS: ViewDef[] = [
     subtitle: "Stress tests and design fitness.",
   },
   {
-    id: "plan",
-    label: "Plan",
-    eyebrow: "Transition view",
-    title: "Migration Plan",
-    subtitle: "Quarter-by-quarter path to the target state.",
+    id: "changelog",
+    label: "Changelog",
+    eyebrow: "Activity view",
+    title: "Changelog",
+    subtitle: "Every patch applied to this scenario.",
   },
 ];
