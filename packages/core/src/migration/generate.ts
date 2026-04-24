@@ -52,7 +52,7 @@ export const generateMigrationPlan = async (
   const completeArgs = {
     userPrompt,
     passPrompt: MIGRATION_PLAN_PROMPT,
-    maxTokens: 4096,
+    maxTokens: 16384,
     ...(args.signal ? { signal: args.signal } : {}),
   };
   const { text } = await copilot.complete(completeArgs);
