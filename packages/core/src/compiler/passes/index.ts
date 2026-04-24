@@ -7,4 +7,3 @@ export * from "./place-agents.js";
 export * from "./synthesize-governance.js";
 export * from "./wire-flows.js";
 export * from "./evaluate-fitness.js";
-export * from "./generate-path.js";

@@ -42,6 +42,49 @@ describe("renderWorkspaceMarkdown", () => {
     expect(md).toContain("_user_");
   });
 
+  it("appends a Migration Plan section when bundle.migrationPlan is set", () => {
+    const bundle = emptyScenarioBundle();
+    bundle.migrationPlan = {
+      id: "mpl_1",
+      generatedAt: "2026-05-01T10:00:00.000Z",
+      sourceScenarioId: "scn_current_state",
+      targetScenarioId: TARGET_SCENARIO_ID,
+      sourceName: "Current State",
+      targetName: "Target State",
+      summary: "Three phases to stand up the target.",
+      phases: [
+        {
+          id: "mph_1",
+          name: "Stand up the pilot POD",
+          rationale: "Start small so we can learn.",
+          preconditions: [],
+          keyChanges: ["Create Pilot POD"],
+          newRoles: ["Pilot POD Lead"],
+          retiredRoles: [],
+          governanceShifts: [],
+          risks: ["Cognitive load"],
+        },
+      ],
+      risks: ["Capacity"],
+      successMeasures: ["All delegations supervised"],
+    };
+    const md = renderWorkspaceMarkdown({ bundle });
+    expect(md).toContain("## Migration Plan");
+    expect(md).toContain("### Phase 1 — Stand up the pilot POD");
+    expect(md).toContain("Three phases to stand up the target.");
+    expect(md).toContain("- Create Pilot POD");
+    expect(md).toContain("### Overall risks");
+    expect(md).toContain("- Capacity");
+    expect(md).toContain("### Success measures");
+    expect(md).toContain("- All delegations supervised");
+  });
+
+  it("omits Migration Plan section when no plan is attached", () => {
+    const bundle = emptyScenarioBundle();
+    const md = renderWorkspaceMarkdown({ bundle });
+    expect(md).not.toContain("## Migration Plan");
+  });
+
   it("reports empty scenarios without crashing", () => {
     const bundle = {
       scenarios: [

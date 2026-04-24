@@ -1,4 +1,5 @@
 import type { Graph, Node } from "../schema/index.js";
+import type { MigrationPlan } from "../migration/types.js";
 import type { InvariantViolation } from "../store/invariants.js";
 import type { ChangelogEntry, Scenario, ScenarioBundle } from "../store/scenario.js";
 
@@ -50,7 +51,67 @@ export const renderWorkspaceMarkdown = ({
     });
   }
 
+  if (bundle.migrationPlan) {
+    renderMigrationPlanMarkdown(out, bundle.migrationPlan);
+  }
+
   return out.join("\n").trimEnd() + "\n";
+};
+
+const renderMigrationPlanMarkdown = (out: string[], plan: MigrationPlan) => {
+  out.push(`## Migration Plan`, "");
+  out.push(
+    `_Plan from ${plan.sourceName} → ${plan.targetName}, generated ${formatDateTime(plan.generatedAt)}._`,
+    ""
+  );
+  out.push(plan.summary, "");
+
+  plan.phases.forEach((phase, i) => {
+    out.push(`### Phase ${i + 1} — ${phase.name}`, "");
+    out.push(phase.rationale, "");
+    if (phase.preconditions.length) {
+      out.push(`**Preconditions**`);
+      for (const p of phase.preconditions) out.push(`- ${p}`);
+      out.push("");
+    }
+    if (phase.keyChanges.length) {
+      out.push(`**Key changes**`);
+      for (const c of phase.keyChanges) out.push(`- ${c}`);
+      out.push("");
+    }
+    if (phase.newRoles.length) {
+      out.push(`**New roles**`);
+      for (const r of phase.newRoles) out.push(`- ${r}`);
+      out.push("");
+    }
+    if (phase.retiredRoles.length) {
+      out.push(`**Retired roles**`);
+      for (const r of phase.retiredRoles) out.push(`- ${r}`);
+      out.push("");
+    }
+    if (phase.governanceShifts.length) {
+      out.push(`**Governance shifts**`);
+      for (const g of phase.governanceShifts) out.push(`- ${g}`);
+      out.push("");
+    }
+    if (phase.risks.length) {
+      out.push(`**Risks**`);
+      for (const r of phase.risks) out.push(`- ${r}`);
+      out.push("");
+    }
+  });
+
+  if (plan.risks.length) {
+    out.push(`### Overall risks`, "");
+    for (const r of plan.risks) out.push(`- ${r}`);
+    out.push("");
+  }
+
+  if (plan.successMeasures.length) {
+    out.push(`### Success measures`, "");
+    for (const m of plan.successMeasures) out.push(`- ${m}`);
+    out.push("");
+  }
 };
 
 const renderScenarioMarkdown = (

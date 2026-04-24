@@ -85,4 +85,41 @@ describe("bundle preservation", () => {
     expect(custom?.kind).toBe("custom");
     expect(custom?.order).toBe(99);
   });
+
+  it("round-trips a migration plan attached to the bundle", () => {
+    const bundle: ScenarioBundle = emptyScenarioBundle();
+    bundle.migrationPlan = {
+      id: "mpl_1",
+      generatedAt: "2026-05-01T00:00:00.000Z",
+      sourceScenarioId: "scn_current_state",
+      targetScenarioId: TARGET_SCENARIO_ID,
+      sourceName: "Current State",
+      targetName: "Target State",
+      summary: "Three phases to stand up the target.",
+      phases: [
+        {
+          id: "mph_1",
+          name: "Phase 1",
+          rationale: "Start small.",
+          preconditions: [],
+          keyChanges: ["Stand up Pilot POD"],
+          newRoles: [],
+          retiredRoles: [],
+          governanceShifts: [],
+          risks: [],
+        },
+      ],
+      risks: ["Watch for cognitive load overflow"],
+      successMeasures: ["All delegations have a named human"],
+    };
+    const text = JSON.stringify(serializeWorkspace({ bundle }));
+    const parsed = parseWorkspace(text);
+    expect(parsed.bundle.migrationPlan?.id).toBe("mpl_1");
+    expect(parsed.bundle.migrationPlan?.phases[0]?.keyChanges).toEqual([
+      "Stand up Pilot POD",
+    ]);
+    expect(parsed.bundle.migrationPlan?.risks).toEqual([
+      "Watch for cognitive load overflow",
+    ]);
+  });
 });

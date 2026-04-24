@@ -9,6 +9,7 @@ import type {
   Scenario,
   ScenarioBundle,
 } from "@ixo-studio/core/store";
+import type { MigrationPlan } from "@ixo-studio/core/migration";
 import {
   activeScenario as selectActiveScenario,
   changelogEntryFromPatch,
@@ -32,6 +33,7 @@ import { QiFlowView } from "../flow/QiFlowView";
 import { GovernanceView } from "../governance/GovernanceView";
 import { FitnessView } from "../fitness/FitnessView";
 import { ChangelogView } from "../changelog/ChangelogView";
+import { MigrationPlanView } from "../migration/MigrationPlanView";
 import { ViewStub } from "../views/ViewStub";
 import { CommandBar } from "./CommandBar";
 import { NavRail } from "./NavRail";
@@ -176,6 +178,17 @@ export function StudioShell() {
       return { ...cur, scenarios: remaining, activeScenarioId: nextActive };
     });
     setSelectedId(undefined);
+  }, []);
+
+  const setMigrationPlan = useCallback((plan: MigrationPlan | null) => {
+    setBundle((cur) => {
+      if (plan === null) {
+        if (!cur.migrationPlan) return cur;
+        const { migrationPlan: _removed, ...rest } = cur;
+        return rest;
+      }
+      return { ...cur, migrationPlan: plan };
+    });
   }, []);
 
   useEffect(() => {
@@ -327,6 +340,11 @@ export function StudioShell() {
           <section className="canvas-panel__content">
             {activeView === "changelog" ? (
               <ChangelogView scenario={active} />
+            ) : activeView === "migration" ? (
+              <MigrationPlanView
+                bundle={bundle}
+                onPlanUpdate={setMigrationPlan}
+              />
             ) : !hasGraph ? (
               <EmptyState onGenerate={() => setModal("generate")} />
             ) : activeView === "organism" ? (

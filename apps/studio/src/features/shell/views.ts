@@ -8,6 +8,7 @@ export type ViewId =
   | "flow"
   | "governance"
   | "fitness"
+  | "migration"
   | "changelog";
 
 export type ViewDef = {
@@ -83,6 +84,13 @@ export const VIEWS: ViewDef[] = [
     eyebrow: "Simulation view",
     title: "Fitness Lab",
     subtitle: "Stress tests and design fitness.",
+  },
+  {
+    id: "migration",
+    label: "Migration Plan",
+    eyebrow: "Path view",
+    title: "Migration Plan",
+    subtitle: "Sequenced narrative for moving from source scenario to target.",
   },
   {
     id: "changelog",

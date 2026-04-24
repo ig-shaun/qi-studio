@@ -2156,3 +2156,239 @@ button {
   white-space: nowrap;
   min-width: 0;
 }
+
+/* === Migration Plan view === */
+
+.migration-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  background: var(--paper-0);
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-lg, 12px);
+}
+
+.migration-controls .form-field {
+  min-width: 220px;
+  flex: 1;
+}
+
+.migration-controls__arrow {
+  font-size: 18px;
+  color: var(--ink-3);
+  padding-bottom: 8px;
+}
+
+.migration-controls__actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.migration-hint {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 13px;
+  padding: 10px 14px;
+  background: var(--paper-0);
+  border: 1px dashed var(--line-1);
+  border-radius: 10px;
+}
+
+.migration-error {
+  margin: 0;
+  color: oklch(0.5 0.15 30);
+  font-size: 13px;
+  padding: 10px 14px;
+  background: oklch(0.97 0.03 30);
+  border: 1px solid oklch(0.88 0.07 30);
+  border-radius: 10px;
+}
+
+.migration-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  color: var(--ink-2);
+  font-size: 13px;
+  background: var(--paper-0);
+  border: 1px solid var(--line-1);
+  border-radius: 10px;
+}
+
+.migration-loading__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: oklch(0.72 0.12 150);
+  animation: migration-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes migration-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.migration-empty {
+  padding: 32px 24px;
+  border: 1px dashed var(--line-1);
+  border-radius: 12px;
+  background: var(--paper-0);
+  text-align: left;
+  max-width: 620px;
+}
+
+.migration-empty__title {
+  margin: 8px 0 6px;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ink-0);
+}
+
+.migration-empty__body {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 13px;
+  max-width: 520px;
+}
+
+.migration-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.migration-plan__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line-1);
+}
+
+.migration-plan__route {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink-0);
+}
+
+.migration-plan__arrow {
+  color: var(--ink-3);
+  font-size: 14px;
+}
+
+.migration-plan__meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+
+.migration-plan__summary {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-1);
+  max-width: 780px;
+}
+
+.migration-phases {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.migration-phase {
+  padding: 16px 18px;
+  background: var(--paper-0);
+  border: 1px solid var(--line-1);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.migration-phase__index {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.migration-phase__name {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ink-0);
+}
+
+.migration-phase__rationale {
+  margin: 0;
+  color: var(--ink-1);
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 780px;
+}
+
+.migration-phase__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.migration-phase__field-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.migration-phase__field--risk .migration-phase__field-label {
+  color: oklch(0.5 0.15 30);
+}
+
+.migration-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ink-1);
+  font-size: 13.5px;
+  line-height: 1.55;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.migration-block {
+  padding: 14px 16px;
+  background: var(--paper-0);
+  border: 1px solid var(--line-1);
+  border-radius: 10px;
+}
+
+.migration-block__title {
+  margin: 0 0 8px;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-0);
+}
+
+.migration-block--risks .migration-block__title {
+  color: oklch(0.5 0.15 30);
+}
