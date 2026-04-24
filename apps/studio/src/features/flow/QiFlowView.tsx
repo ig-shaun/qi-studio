@@ -154,7 +154,7 @@ export function QiFlowView({ graph, onPatch }: Props) {
         <div>
           <div className="eyebrow">Qi flow map</div>
           <p className="form-toolbar__lead">
-            Interaction edges between PODs, Team-Topologies-style. Collaboration
+            Interaction edges between PODs and their human-AI teams. Collaboration
             and facilitation edges must carry a review date and exit criteria
             so coordination doesn't become permanent.
           </p>

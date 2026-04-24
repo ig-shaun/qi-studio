@@ -66,7 +66,7 @@ export const delegationSafetyScore = (g: Graph): FitnessMetric => {
       id: "delegation-safety",
       name: "Delegation Safety Score",
       description:
-        "Share of agent delegations that carry a named human supervisor and — for act-* autonomy — a linked checkpoint.",
+        "Share of agent delegations that carry a named human supervisor, and for actions with autonomy — a linked checkpoint.",
       value: 1,
       display: "no delegations",
       direction: "higher-better",
