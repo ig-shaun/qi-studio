@@ -37,9 +37,14 @@ import { CommandBar } from "./CommandBar";
 import { NavRail } from "./NavRail";
 import { ScenarioSwitcher } from "./ScenarioSwitcher";
 import { VIEWS, type ViewId } from "./views";
+import {
+  DEFAULT_WORKSPACE_NAME,
+  hasDirtyContent,
+  loadPersistedState,
+  savePersistedState,
+} from "./persistence";
 
 const NAV_STATE_KEY = "qi.navExpanded";
-const DEFAULT_WORKSPACE_NAME = "AI-native operating model";
 
 const randomId = (prefix: string): string => {
   const suffix =
@@ -59,6 +64,10 @@ export function StudioShell() {
   const [workspaceName, setWorkspaceName] = useState<string>(
     DEFAULT_WORKSPACE_NAME
   );
+  // Gate persistence writes until after we've had a chance to read from
+  // localStorage — otherwise the initial default render would clobber the
+  // stored session before it's hydrated.
+  const [persistenceReady, setPersistenceReady] = useState(false);
 
   const active = useMemo(() => selectActiveScenario(bundle), [bundle]);
   const graph: Graph = active.graph;
@@ -181,6 +190,58 @@ export function StudioShell() {
   useEffect(() => {
     window.localStorage.setItem(NAV_STATE_KEY, navExpanded ? "1" : "0");
   }, [navExpanded]);
+
+  useEffect(() => {
+    const persisted = loadPersistedState();
+    if (persisted) {
+      setBundle(persisted.bundle);
+      setSelectedId(persisted.selectedId);
+      setActiveView(persisted.activeView);
+      setModal(persisted.modal);
+      setWorkspaceName(persisted.workspaceName);
+    }
+    setPersistenceReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!persistenceReady) return;
+    savePersistedState({
+      bundle,
+      ...(selectedId !== undefined ? { selectedId } : {}),
+      activeView,
+      modal,
+      workspaceName,
+    });
+  }, [persistenceReady, bundle, selectedId, activeView, modal, workspaceName]);
+
+  useEffect(() => {
+    if (!persistenceReady) return;
+    const dirty = hasDirtyContent(bundle, workspaceName);
+    // The session is already saved continuously. The beforeunload prompt is
+    // an intentional nudge: browsers can nuke tabs without warning, and we
+    // want users to notice they have unexported work. `pagehide` does one
+    // last write in case a state update raced the unload.
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!dirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const handlePageHide = () => {
+      savePersistedState({
+        bundle,
+        ...(selectedId !== undefined ? { selectedId } : {}),
+        activeView,
+        modal,
+        workspaceName,
+      });
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("pagehide", handlePageHide);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", handlePageHide);
+    };
+  }, [persistenceReady, bundle, selectedId, activeView, modal, workspaceName]);
 
   const hasGraph = Object.keys(graph.nodes).length > 0;
   const view = VIEWS.find((v) => v.id === activeView) ?? VIEWS[1]!;
