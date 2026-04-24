@@ -1,16 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Graph } from "@ixo-studio/core/schema";
-import type { InvariantViolation } from "@ixo-studio/core/store";
-import { parseWorkspace, validateGraph } from "@ixo-studio/core";
+import type { ScenarioBundle } from "@ixo-studio/core/store";
+import { parseWorkspace } from "@ixo-studio/core";
 import { readFileAsText } from "./file-utils";
 
 type Props = {
   onImport: (args: {
-    graph: Graph;
-    violations: InvariantViolation[];
+    bundle: ScenarioBundle;
     workspaceName?: string;
+    importedVersion: 1 | 2;
   }) => void;
 };
 
@@ -26,10 +25,9 @@ export function ImportButton({ onImport }: Props) {
     try {
       const text = await readFileAsText(file);
       const parsed = parseWorkspace(text);
-      const violations = validateGraph(parsed.graph);
       onImport({
-        graph: parsed.graph,
-        violations,
+        bundle: parsed.bundle,
+        importedVersion: parsed.importedVersion,
         ...(parsed.workspaceName ? { workspaceName: parsed.workspaceName } : {}),
       });
     } catch (err) {

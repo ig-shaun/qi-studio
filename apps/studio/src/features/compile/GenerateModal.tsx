@@ -2,17 +2,20 @@
 
 import { useState } from "react";
 import type { Graph } from "@ixo-studio/core/schema";
-import type { InvariantViolation } from "@ixo-studio/core/store";
+import type { InvariantViolation, ScenarioBundle } from "@ixo-studio/core/store";
 import type { PassResult } from "@ixo-studio/core/compiler";
+import { TARGET_SCENARIO_ID } from "@ixo-studio/core/store";
 import { Modal } from "../shell/Modal";
 
 type CompileResult = {
   graph: Graph;
   results: PassResult[];
   violations: InvariantViolation[];
+  targetScenarioId: string;
 };
 
 type Props = {
+  bundle: ScenarioBundle;
   onResult: (r: CompileResult) => void;
   onClose: () => void;
 };
@@ -47,11 +50,22 @@ type StreamEvent =
   | { type: "done"; graph: Graph; results: PassResult[]; violations: InvariantViolation[] }
   | { type: "error"; message: string };
 
-export function GenerateModal({ onResult, onClose }: Props) {
+export function GenerateModal({ bundle, onResult, onClose }: Props) {
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
+  const [target, setTarget] = useState<string>(() => {
+    // Default = Target State (if present), else the active scenario.
+    return (
+      bundle.scenarios.find((s) => s.id === TARGET_SCENARIO_ID)?.id ??
+      bundle.activeScenarioId
+    );
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [passes, setPasses] = useState<PassRow[]>([]);
+
+  const targetScenario = bundle.scenarios.find((s) => s.id === target);
+  const targetHasNodes =
+    targetScenario && Object.keys(targetScenario.graph.nodes).length > 0;
 
   async function compile() {
     setLoading(true);
@@ -121,6 +135,7 @@ export function GenerateModal({ onResult, onClose }: Props) {
           graph: event.graph,
           results: event.results,
           violations: event.violations,
+          targetScenarioId: target,
         });
         onClose();
         return;
@@ -138,6 +153,39 @@ export function GenerateModal({ onResult, onClose }: Props) {
         Kernel and unfold value loops, PODs, roles, delegation contracts, and
         governance checkpoints.
       </p>
+      <label className="form-field" style={{ marginTop: 4 }}>
+        <span className="form-field__label">Target scenario</span>
+        <select
+          className="select"
+          value={target}
+          onChange={(e) => setTarget(e.target.value)}
+          disabled={loading}
+        >
+          {[...bundle.scenarios]
+            .sort((a, b) => a.order - b.order)
+            .map((s) => {
+              const n = Object.keys(s.graph.nodes).length;
+              return (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                  {n > 0 ? ` — ${n} node${n === 1 ? "" : "s"} (will be replaced)` : ""}
+                </option>
+              );
+            })}
+        </select>
+      </label>
+      {targetHasNodes && (
+        <p
+          style={{
+            color: "oklch(0.55 0.15 30)",
+            fontSize: 12,
+            margin: "4px 0 0",
+          }}
+        >
+          Note: {targetScenario!.name} already has content. It will be
+          replaced by the generated graph.
+        </p>
+      )}
       <textarea
         className="textarea"
         rows={7}
