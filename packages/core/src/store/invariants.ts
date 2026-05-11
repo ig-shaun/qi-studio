@@ -1,5 +1,11 @@
 import type { Graph, Node } from "../schema/index.js";
 import type { NodeId } from "../schema/ids.js";
+import {
+  hasWalletOrPaymentAuthority,
+  isAuthorityScopeAllowedForArchetype,
+  isRoleClassAllowedForArchetype,
+  isToolAccessAllowedForArchetype,
+} from "../schema/archetype.js";
 
 export type InvariantSeverity = "error" | "warning";
 
@@ -26,12 +32,37 @@ export const validateGraph = (graph: Graph): InvariantViolation[] => {
   // 1. Every DelegationContract must have a supervisingHumanRoleId pointing at a human role.
   for (const d of nodes.filter(isDelegation)) {
     const supervisor = graph.nodes[d.supervisingHumanRoleId];
-    if (!supervisor || !isRole(supervisor) || supervisor.class !== "human") {
+    if (
+      !supervisor ||
+      !isRole(supervisor) ||
+      (supervisor.class !== "human" && supervisor.class !== "hybrid")
+    ) {
       violations.push({
         code: "delegation.missing-human-supervisor",
         severity: "error",
         message: `Delegation "${d.mandate}" has no human supervising role.`,
         nodeIds: [d.id],
+      });
+    }
+  }
+
+  // 1b. Role archetypes are the authority envelope source of truth.
+  for (const r of nodes.filter(isRole)) {
+    if (!r.archetype) {
+      violations.push({
+        code: "role.missing-archetype",
+        severity: "warning",
+        message: `Role "${r.name}" has no IXO/Qi archetype.`,
+        nodeIds: [r.id],
+      });
+      continue;
+    }
+    if (!isRoleClassAllowedForArchetype(r.archetype, r.class)) {
+      violations.push({
+        code: "role.archetype-class-mismatch",
+        severity: "error",
+        message: `Role "${r.name}" uses class ${r.class}, which is not allowed for archetype ${r.archetype}.`,
+        nodeIds: [r.id],
       });
     }
   }
@@ -46,6 +77,80 @@ export const validateGraph = (graph: Graph): InvariantViolation[] => {
         severity: "error",
         message: `Delegation "${d.mandate}" has autonomy ${d.autonomyLevel} but no checkpoint policy.`,
         nodeIds: [d.id],
+      });
+    }
+  }
+
+  // 2b. Delegation envelopes must stay inside the delegated role archetype.
+  for (const d of nodes.filter(isDelegation)) {
+    const agent = graph.nodes[d.delegatedAgentRoleId];
+    if (!agent || !isRole(agent) || !agent.archetype) continue;
+
+    const illegalScopes = d.authorityScopes.filter(
+      (scope) => !isAuthorityScopeAllowedForArchetype(agent.archetype!, scope)
+    );
+    if (illegalScopes.length > 0) {
+      violations.push({
+        code: "delegation.scope-outside-archetype",
+        severity: "error",
+        message: `Delegation "${d.mandate}" grants scopes outside ${agent.archetype}: ${illegalScopes.join(", ")}.`,
+        nodeIds: [d.id, agent.id],
+      });
+    }
+
+    const illegalTools = d.toolAccess.filter(
+      (tool) => !isToolAccessAllowedForArchetype(agent.archetype!, tool)
+    );
+    if (illegalTools.length > 0) {
+      violations.push({
+        code:
+          agent.archetype === "orchestrator"
+            ? "delegation.orchestrator-wallet-rights"
+            : "delegation.tool-outside-archetype",
+        severity: "error",
+        message: `Delegation "${d.mandate}" has tool access outside ${agent.archetype}: ${illegalTools
+          .map((t) => `${t.tool}:${t.scope}`)
+          .join(", ")}.`,
+        nodeIds: [d.id, agent.id],
+      });
+    }
+
+    if (
+      agent.archetype === "orchestrator" &&
+      hasWalletOrPaymentAuthority([...d.authorityScopes, ...d.allowedActions])
+    ) {
+      violations.push({
+        code: "delegation.orchestrator-wallet-rights",
+        severity: "error",
+        message: `Orchestrator delegation "${d.mandate}" includes wallet or payment authority.`,
+        nodeIds: [d.id, agent.id],
+      });
+    }
+
+    const hasPayment = hasWalletOrPaymentAuthority([
+        ...d.authorityScopes,
+        ...d.allowedActions,
+      ]);
+    const hasHighImpactScope =
+      hasPayment ||
+      (d.spendBudget ?? 0) > 0 ||
+      d.authorityScopes.some((scope) =>
+        [
+          "flow:pause",
+          "incident:create",
+          "access:grant",
+          "evidence:freeze",
+          "schema:publish",
+        ].some((prefix) => scope.startsWith(prefix))
+      );
+    if (hasHighImpactScope && !d.checkpointPolicyId) {
+      violations.push({
+        code: hasPayment
+          ? "delegation.payment-without-checkpoint"
+          : "delegation.high-impact-without-checkpoint",
+        severity: "error",
+        message: `Delegation "${d.mandate}" has high-impact authority but no checkpoint policy.`,
+        nodeIds: [d.id, agent.id],
       });
     }
   }

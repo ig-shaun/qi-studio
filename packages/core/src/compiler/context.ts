@@ -69,6 +69,7 @@ export const summarizeRole = (r: RoleTemplate) => ({
   id: r.id,
   name: r.name,
   class: r.class,
+  archetype: r.archetype,
   agentClass: r.agentClass,
   purpose: r.purpose,
 });
@@ -80,5 +81,9 @@ export const summarizeDelegation = (d: DelegationContract) => ({
   delegatedAgentRoleId: d.delegatedAgentRoleId,
   mandate: d.mandate,
   autonomyLevel: d.autonomyLevel,
+  authorityScopes: d.authorityScopes,
+  evidenceBoundary: d.evidenceBoundary,
+  escalationTriggers: d.escalationTriggers,
+  failureModes: d.failureModes,
   checkpointPolicyId: d.checkpointPolicyId,
 });

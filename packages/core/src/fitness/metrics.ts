@@ -1,5 +1,6 @@
 import type { Graph, Node } from "../schema/index.js";
 import type { NodeId } from "../schema/ids.js";
+import { isRoleClassAllowedForArchetype } from "../schema/archetype.js";
 
 export type FitnessMetric = {
   id: string;
@@ -174,11 +175,40 @@ export const roleLiquidity = (g: Graph): FitnessMetric => {
   };
 };
 
+export const archetypeCoverage = (g: Graph): FitnessMetric => {
+  const rs = roles(g);
+  if (rs.length === 0) {
+    return {
+      id: "archetype-coverage",
+      name: "Archetype Coverage",
+      description:
+        "Share of roles assigned to an IXO/Qi archetype with a compatible role class.",
+      value: 0,
+      display: "no roles",
+      direction: "higher-better",
+    };
+  }
+  const covered = rs.filter(
+    (r) =>
+      !!r.archetype && isRoleClassAllowedForArchetype(r.archetype, r.class)
+  ).length;
+  return {
+    id: "archetype-coverage",
+    name: "Archetype Coverage",
+    description:
+      "Share of roles assigned to an IXO/Qi archetype with a compatible role class.",
+    value: covered / rs.length,
+    display: `${covered} / ${rs.length}`,
+    direction: "higher-better",
+  };
+};
+
 export const computeMetrics = (g: Graph): FitnessMetric[] => [
   intentCoherence(g),
   delegationSafetyScore(g),
   humanJudgmentClarity(g),
   roleLiquidity(g),
+  archetypeCoverage(g),
 ];
 
 // Unused import suppressor — keeps types ergonomic without re-exporting helpers.

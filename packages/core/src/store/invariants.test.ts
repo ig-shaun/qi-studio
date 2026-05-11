@@ -2,6 +2,13 @@ import { describe, expect, it } from "vitest";
 import type { Graph } from "../schema/index.js";
 import { validateGraph } from "./invariants.js";
 
+const emptyDelegationEnvelope = {
+  authorityScopes: [],
+  evidenceBoundary: [],
+  escalationTriggers: [],
+  failureModes: [],
+};
+
 const baseGraph = (): Graph => ({
   intentId: "intent_1",
   nodes: {
@@ -33,6 +40,7 @@ const baseGraph = (): Graph => ({
       kind: "role",
       name: "Verification Lead",
       class: "human",
+      archetype: "verifier",
       purpose: "",
       capabilities: [],
       accountabilities: [],
@@ -44,6 +52,7 @@ const baseGraph = (): Graph => ({
       kind: "role",
       name: "Remote Sensing Agent",
       class: "agent",
+      archetype: "executor",
       agentClass: "service",
       purpose: "",
       capabilities: [],
@@ -91,6 +100,7 @@ describe("validateGraph", () => {
       delegatedAgentRoleId: "role_agent",
       mandate: "Classify parcel imagery",
       autonomyLevel: "act-with-approval",
+      ...emptyDelegationEnvelope,
       allowedActions: [],
       forbiddenActions: [],
       toolAccess: [],
@@ -109,6 +119,7 @@ describe("validateGraph", () => {
       delegatedAgentRoleId: "role_agent",
       mandate: "Rogue mandate",
       autonomyLevel: "assist",
+      ...emptyDelegationEnvelope,
       allowedActions: [],
       forbiddenActions: [],
       toolAccess: [],
@@ -127,12 +138,97 @@ describe("validateGraph", () => {
       delegatedAgentRoleId: "role_agent",
       mandate: "Auto-issue",
       autonomyLevel: "act-with-audit",
+      ...emptyDelegationEnvelope,
       allowedActions: [],
       forbiddenActions: [],
       toolAccess: [],
     };
     const v = validateGraph(g);
     expect(v.map((x) => x.code)).toContain("delegation.autonomy-without-checkpoint");
+  });
+
+  it("allows hybrid supervising roles", () => {
+    const g = baseGraph();
+    const supervisor = g.nodes.role_human;
+    if (!supervisor || supervisor.kind !== "role") throw new Error("fixture broken");
+    supervisor.class = "hybrid";
+    supervisor.archetype = "executor";
+    g.nodes.deleg_hybrid = {
+      id: "deleg_hybrid",
+      kind: "delegation",
+      podId: "pod_1",
+      supervisingHumanRoleId: "role_human",
+      delegatedAgentRoleId: "role_agent",
+      mandate: "Run bounded task",
+      autonomyLevel: "assist",
+      ...emptyDelegationEnvelope,
+      allowedActions: [],
+      forbiddenActions: [],
+      toolAccess: [],
+    };
+    const v = validateGraph(g);
+    expect(v.map((x) => x.code)).not.toContain(
+      "delegation.missing-human-supervisor"
+    );
+  });
+
+  it("flags missing archetypes and archetype class mismatches", () => {
+    const g = baseGraph();
+    const role = g.nodes.role_agent;
+    if (!role || role.kind !== "role") throw new Error("fixture broken");
+    role.archetype = undefined;
+    let codes = validateGraph(g).map((x) => x.code);
+    expect(codes).toContain("role.missing-archetype");
+
+    role.archetype = "orchestrator";
+    role.class = "hybrid";
+    codes = validateGraph(g).map((x) => x.code);
+    expect(codes).toContain("role.archetype-class-mismatch");
+  });
+
+  it("flags delegation authority outside the delegated archetype", () => {
+    const g = baseGraph();
+    g.nodes.deleg_scope = {
+      id: "deleg_scope",
+      kind: "delegation",
+      podId: "pod_1",
+      supervisingHumanRoleId: "role_human",
+      delegatedAgentRoleId: "role_agent",
+      mandate: "Release funds from executor",
+      autonomyLevel: "assist",
+      ...emptyDelegationEnvelope,
+      authorityScopes: ["payment:release"],
+      allowedActions: [],
+      forbiddenActions: [],
+      toolAccess: [],
+    };
+    const codes = validateGraph(g).map((x) => x.code);
+    expect(codes).toContain("delegation.scope-outside-archetype");
+    expect(codes).toContain("delegation.payment-without-checkpoint");
+  });
+
+  it("flags orchestrator wallet or payment rights", () => {
+    const g = baseGraph();
+    const agent = g.nodes.role_agent;
+    if (!agent || agent.kind !== "role") throw new Error("fixture broken");
+    agent.archetype = "orchestrator";
+    agent.agentClass = "orchestration";
+    g.nodes.deleg_orchestrator = {
+      id: "deleg_orchestrator",
+      kind: "delegation",
+      podId: "pod_1",
+      supervisingHumanRoleId: "role_human",
+      delegatedAgentRoleId: "role_agent",
+      mandate: "Coordinate workflow",
+      autonomyLevel: "assist",
+      ...emptyDelegationEnvelope,
+      authorityScopes: ["flow:orchestrate"],
+      allowedActions: [],
+      forbiddenActions: [],
+      toolAccess: [{ tool: "payment-wallet", scope: "invoke" }],
+    };
+    const codes = validateGraph(g).map((x) => x.code);
+    expect(codes).toContain("delegation.orchestrator-wallet-rights");
   });
 
   it("flags cognitive overload", () => {

@@ -85,4 +85,52 @@ describe("bundle preservation", () => {
     expect(custom?.kind).toBe("custom");
     expect(custom?.order).toBe(99);
   });
+
+  it("defaults new delegation policy fields when importing older v2 files", () => {
+    const now = "2026-04-20T12:00:00.000Z";
+    const legacy = {
+      kind: WORKSPACE_FILE_KIND,
+      version: 2,
+      exportedAt: now,
+      scenarios: [
+        {
+          id: "scn_legacy",
+          name: "Legacy",
+          slug: "legacy",
+          kind: "target",
+          order: 0,
+          createdAt: now,
+          updatedAt: now,
+          graph: {
+            nodes: {
+              deleg_1: {
+                id: "deleg_1",
+                kind: "delegation",
+                podId: "pod_1",
+                supervisingHumanRoleId: "role_human",
+                delegatedAgentRoleId: "role_agent",
+                mandate: "Legacy delegation",
+                autonomyLevel: "assist",
+                allowedActions: [],
+                forbiddenActions: [],
+                toolAccess: [],
+              },
+            },
+            edges: {},
+          },
+          changelog: [],
+        },
+      ],
+      activeScenarioId: "scn_legacy",
+    };
+
+    const parsed = parseWorkspace(JSON.stringify(legacy));
+    const node = parsed.bundle.scenarios[0]!.graph.nodes.deleg_1;
+    expect(node?.kind).toBe("delegation");
+    if (!node || node.kind !== "delegation") throw new Error("fixture broken");
+    expect(node.authorityScopes).toEqual([]);
+    expect(node.evidenceBoundary).toEqual([]);
+    expect(node.escalationTriggers).toEqual([]);
+    expect(node.failureModes).toEqual([]);
+  });
 });
