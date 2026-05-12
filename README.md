@@ -18,6 +18,30 @@ pnpm install
 pnpm dev
 ```
 
+## IXO Portal iframe embedding
+
+Qi Studio exposes a Portal app manifest at `/ixo-portal/manifest.json`.
+
+Configure deployment origins with:
+
+```bash
+QI_STUDIO_PUBLIC_ORIGIN=https://studio.example
+NEXT_PUBLIC_IXO_PORTAL_ALLOWED_ORIGINS=https://portal.example
+```
+
+Register the app on an IXO domain with a linked resource like:
+
+```json
+{
+  "id": "did:ixo:entity:<id>#app-01",
+  "type": "App",
+  "mediaType": "application/json",
+  "serviceEndpoint": "https://studio.example/ixo-portal/manifest.json"
+}
+```
+
+The Portal route is `/domain/[entityDid]/app/app-01`.
+
 ## v1 scope
 
 Vertical slice through all seven stages (Intent Kernel, Value Loops, PODs, Roles, Agents, Governance, Fitness), Living Constellation canvas only. Greenfield future-back orientation. See the plan file for details.

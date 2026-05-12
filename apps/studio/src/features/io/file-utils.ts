@@ -12,6 +12,28 @@ export const downloadBlob = (filename: string, content: string, mime: string) =>
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
+export const copyTextToClipboard = async (content: string): Promise<boolean> => {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(content);
+    return true;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = content;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  textarea.style.pointerEvents = "none";
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  try {
+    return document.execCommand("copy");
+  } finally {
+    textarea.remove();
+  }
+};
+
 export const slugify = (s: string): string =>
   s
     .toLowerCase()

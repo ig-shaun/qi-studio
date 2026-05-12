@@ -10,6 +10,7 @@ type Props = {
   onExport?: () => void;
   importSlot?: ReactNode;
   scenarioSlot?: ReactNode;
+  portalSlot?: ReactNode;
 };
 
 export function CommandBar({
@@ -19,6 +20,7 @@ export function CommandBar({
   onExport,
   importSlot,
   scenarioSlot,
+  portalSlot,
 }: Props) {
   return (
     <header className="command-bar">
@@ -35,6 +37,8 @@ export function CommandBar({
         <span className="workspace-chip__value">{workspaceName}</span>
         <span className="workspace-chip__dot" aria-hidden />
       </div>
+
+      {portalSlot}
 
       {scenarioSlot}
 
