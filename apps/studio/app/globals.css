@@ -106,11 +106,17 @@ button {
 
 .app-shell {
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 18px 20px 22px;
   overflow: hidden;
+}
+
+.app-shell[data-portal] {
+  gap: 10px;
+  padding: 10px;
 }
 
 .command-bar {
@@ -122,6 +128,11 @@ button {
   border: 1px solid var(--line-1);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xs);
+}
+
+.app-shell[data-portal] .command-bar {
+  flex-wrap: wrap;
+  border-radius: var(--radius-lg);
 }
 
 .brand-cluster {
@@ -185,6 +196,45 @@ button {
 .workspace-chip__dot--muted {
   background: var(--ink-3);
   box-shadow: 0 0 0 3px color-mix(in oklch, var(--ink-3) 15%, transparent);
+}
+
+.portal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in oklch, var(--accent) 45%, var(--line-1));
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--accent) 8%, var(--paper-2));
+  color: var(--ink-1);
+  min-width: 0;
+}
+
+.portal-chip--waiting {
+  border-color: color-mix(in oklch, var(--amber) 55%, var(--line-1));
+  background: color-mix(in oklch, var(--amber) 10%, var(--paper-2));
+}
+
+.portal-chip--error {
+  border-color: color-mix(in oklch, var(--coral) 55%, var(--line-1));
+  background: color-mix(in oklch, var(--coral) 10%, var(--paper-2));
+}
+
+.portal-chip__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.portal-chip__value {
+  font-size: 12.5px;
+  min-width: 0;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scenario-switcher {
@@ -596,6 +646,12 @@ button {
   flex: 1;
   min-height: 0;
   transition: grid-template-columns var(--t-layout);
+}
+
+.app-shell[data-portal] .canvas-panel,
+.app-shell[data-portal] .inspector-panel,
+.app-shell[data-portal] .nav-rail {
+  border-radius: var(--radius-lg);
 }
 
 .app-grid[data-nav="expanded"] {
@@ -2155,4 +2211,97 @@ button {
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+
+@media (max-width: 1180px) {
+  .app-shell[data-portal] .app-grid {
+    grid-template-columns: var(--nav-w, 56px) minmax(0, 1fr);
+  }
+
+  .app-shell[data-portal] .inspector-panel {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-shell[data-portal] {
+    padding: 8px;
+  }
+
+  .app-shell[data-portal] .app-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .app-shell[data-portal] .app-grid[data-nav="expanded"] {
+    --nav-w: 100%;
+  }
+
+  .app-shell[data-portal] .nav-rail {
+    flex-direction: row;
+    align-items: center;
+    min-width: 0;
+    padding: 8px;
+  }
+
+  .app-shell[data-portal] .nav-toggle {
+    display: none;
+  }
+
+  .app-shell[data-portal] .nav-rail__list {
+    flex: 1;
+    min-width: 0;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .app-shell[data-portal] .nav-button {
+    flex: 0 0 auto;
+  }
+
+  .app-shell[data-portal] .nav-button__label {
+    display: none;
+  }
+
+  .app-shell[data-portal] .canvas-panel {
+    padding: 12px;
+  }
+
+  .app-shell[data-portal] .canvas-panel__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell[data-portal] .brand-copy .eyebrow,
+  .app-shell[data-portal] .search-field,
+  .app-shell[data-portal] .workspace-chip__label,
+  .app-shell[data-portal] .portal-chip__label {
+    display: none;
+  }
+
+  .app-shell[data-portal] .command-bar {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .app-shell[data-portal] .brand-cluster {
+    padding-right: 8px;
+  }
+
+  .app-shell[data-portal] .workspace-chip,
+  .app-shell[data-portal] .portal-chip {
+    padding: 5px 8px;
+  }
+
+  .app-shell[data-portal] .command-actions {
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .app-shell[data-portal] .canvas-panel__headline h2 {
+    font-size: 19px;
+  }
 }

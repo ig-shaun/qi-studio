@@ -33,6 +33,11 @@ import { GovernanceView } from "../governance/GovernanceView";
 import { FitnessView } from "../fitness/FitnessView";
 import { ChangelogView } from "../changelog/ChangelogView";
 import { ViewStub } from "../views/ViewStub";
+import {
+  IxoPortalProvider,
+  useIxoPortal,
+  type IxoPortalBridgeState,
+} from "../portal/IxoPortalProvider";
 import { CommandBar } from "./CommandBar";
 import { NavRail } from "./NavRail";
 import { ScenarioSwitcher } from "./ScenarioSwitcher";
@@ -50,6 +55,15 @@ const randomId = (prefix: string): string => {
 };
 
 export function StudioShell() {
+  return (
+    <IxoPortalProvider>
+      <StudioShellContent />
+    </IxoPortalProvider>
+  );
+}
+
+function StudioShellContent() {
+  const portal = useIxoPortal();
   const [bundle, setBundle] = useState<ScenarioBundle>(() => emptyScenarioBundle());
   const [violations, setViolations] = useState<InvariantViolation[]>([]);
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
@@ -188,11 +202,15 @@ export function StudioShell() {
   const warningCount = violations.filter((v) => v.severity === "warning").length;
 
   return (
-    <div className="app-shell">
+    <div
+      className="app-shell"
+      data-portal={portal.isPortalMode ? portal.status : undefined}
+    >
       <CommandBar
         workspaceName={workspaceName}
         onGenerate={() => setModal("generate")}
         {...(hasGraph ? { onExport: () => setModal("export") } : {})}
+        portalSlot={<PortalConnectionChip portal={portal} />}
         scenarioSlot={
           <ScenarioSwitcher
             bundle={bundle}
@@ -334,10 +352,34 @@ export function StudioShell() {
           violationsByScenario={Object.fromEntries(
             bundle.scenarios.map((s) => [s.id, validateGraph(s.graph)])
           )}
+          portalMode={portal.isPortalMode}
           onClose={() => setModal(null)}
         />
       )}
     </div>
+  );
+}
+
+function PortalConnectionChip({ portal }: { portal: IxoPortalBridgeState }) {
+  if (!portal.isPortalMode) return null;
+
+  const label =
+    portal.status === "connected"
+      ? portal.initPayload?.domain.name ||
+        portal.initPayload?.domain.did ||
+        "Connected"
+      : portal.status === "error"
+      ? "Configuration needed"
+      : "Awaiting Portal";
+
+  return (
+    <span
+      className={`portal-chip portal-chip--${portal.status}`}
+      title={portal.lastError ?? undefined}
+    >
+      <span className="portal-chip__label">Portal</span>
+      <span className="portal-chip__value">{label}</span>
+    </span>
   );
 }
 
