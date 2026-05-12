@@ -5,6 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -12,8 +16,9 @@
   },
   "dependencies": {
     "@ixo-studio/core": "workspace:*",
+    "@opennextjs/cloudflare": "^1.19.9",
     "dexie": "^4.0.10",
-    "next": "^15.0.3",
+    "next": "^15.5.18",
     "react": "^19.0.0-rc-65a56d0e-20241020",
     "react-dom": "^19.0.0-rc-65a56d0e-20241020",
     "zustand": "^5.0.0"
@@ -23,6 +28,7 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "typescript": "^5.6.3",
-    "vitest": "^2.1.3"
+    "vitest": "^2.1.3",
+    "wrangler": "^4.90.0"
   }
 }

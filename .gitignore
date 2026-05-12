@@ -1,5 +1,7 @@
 node_modules
 .next
+.open-next
+.wrangler
 dist
 build
 out
@@ -9,9 +11,10 @@ out
 .env
 .env.local
 .env.*.local
+.dev.vars*
+!.dev.vars.example
 coverage
 .vitest-cache
 .pnpm-store
 tsconfig.tsbuildinfo
 **/.next/types/
-
