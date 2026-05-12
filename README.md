@@ -42,6 +42,17 @@ Register the app on an IXO domain with a linked resource like:
 
 The Portal route is `/domain/[entityDid]/app/app-01`.
 
+## Cloudflare deployment
+
+Qi Studio deploys to Cloudflare Workers through OpenNext.
+
+```bash
+pnpm --filter @ixo-studio/studio deploy
+```
+
+The current Worker is `qi-studio` at `https://qi-studio.ixo-api.workers.dev`.
+Set `ANTHROPIC_API_KEY` as a Cloudflare Worker secret before using compiler routes in production.
+
 ## v1 scope
 
 Vertical slice through all seven stages (Intent Kernel, Value Loops, PODs, Roles, Agents, Governance, Fitness), Living Constellation canvas only. Greenfield future-back orientation. See the plan file for details.
