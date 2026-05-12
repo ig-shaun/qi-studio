@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import type { Graph, Node } from "@ixo-studio/core/schema";
+import { getArchetypePolicy } from "@ixo-studio/core/schema";
 
 type Props = {
   graph: Graph;
@@ -247,13 +248,26 @@ function NodeInspector({ node, graph }: { node: Node; graph: Graph }) {
         </>
       );
     }
-    case "role":
+    case "role": {
+      const policy = getArchetypePolicy(node.archetype);
       return (
         <>
           <Section title={node.name}>
             <div className="eyebrow">Role — {node.class}{node.agentClass ? ` · ${node.agentClass}` : ""}</div>
             <p className="inspector-lead">{node.purpose}</p>
           </Section>
+          {policy && (
+            <>
+              <Section title="Archetype">
+                <Field label="Type">{policy.label}</Field>
+                <Field label="Guardrail">{policy.coreGuardrail}</Field>
+              </Section>
+              <ListSection title="Authority" values={policy.authorityScopes} />
+              <ListSection title="Evidence boundary" values={policy.evidenceBoundary} />
+              <ListSection title="Escalation" values={policy.escalationTriggers} />
+              <ListSection title="Failure modes" values={policy.failureModes} />
+            </>
+          )}
           {node.accountabilities.length > 0 && (
             <Section title="Accountabilities">
               <ul className="inspector-list">
@@ -274,6 +288,7 @@ function NodeInspector({ node, graph }: { node: Node; graph: Graph }) {
           )}
         </>
       );
+    }
     case "delegation":
       return (
         <>
@@ -292,6 +307,10 @@ function NodeInspector({ node, graph }: { node: Node; graph: Graph }) {
               </Field>
             )}
           </Section>
+          <ListSection title="Authority scopes" values={node.authorityScopes} />
+          <ListSection title="Evidence boundary" values={node.evidenceBoundary} />
+          <ListSection title="Escalation triggers" values={node.escalationTriggers} />
+          <ListSection title="Failure modes" values={node.failureModes} />
           {node.allowedActions.length > 0 && (
             <Section title="Allowed">
               <ul className="inspector-list">
@@ -358,6 +377,25 @@ function NodeInspector({ node, graph }: { node: Node; graph: Graph }) {
         </>
       );
   }
+}
+
+function ListSection({
+  title,
+  values,
+}: {
+  title: string;
+  values: readonly string[];
+}) {
+  if (values.length === 0) return null;
+  return (
+    <Section title={title}>
+      <ul className="inspector-list">
+        {values.map((value, i) => (
+          <li key={`${title}-${i}`}>{value}</li>
+        ))}
+      </ul>
+    </Section>
+  );
 }
 
 function roleName(graph: Graph, id: string): string {

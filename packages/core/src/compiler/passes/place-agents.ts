@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { newNodeId } from "../../schema/ids.js";
+import {
+  isToolAccessAllowedForArchetype,
+  materializeDelegationPolicy,
+} from "../../schema/archetype.js";
 import { AutonomyLevel } from "../../schema/primitives.js";
 import type { DelegationContract } from "../../schema/index.js";
 import type { Pass } from "./types.js";
@@ -70,6 +74,14 @@ export const placeAgents: Pass = async (ctx) => {
       return supervisorInPod && agentInPod;
     })
     .map((d) => {
+      const agent = roleById.get(d.delegatedAgentRoleId);
+      const policy = materializeDelegationPolicy(agent?.archetype);
+      const toolAccess =
+        agent?.archetype
+          ? d.toolAccess.filter((t) =>
+              isToolAccessAllowedForArchetype(agent.archetype!, t)
+            )
+          : d.toolAccess;
       const contract: DelegationContract = {
         id: newNodeId("deleg"),
         kind: "delegation",
@@ -77,11 +89,15 @@ export const placeAgents: Pass = async (ctx) => {
         supervisingHumanRoleId: d.supervisingHumanRoleId,
         delegatedAgentRoleId: d.delegatedAgentRoleId,
         mandate: d.mandate,
-        autonomyLevel: d.autonomyLevel,
+        autonomyLevel: d.autonomyLevel ?? policy.autonomyLevel,
+        authorityScopes: policy.authorityScopes,
+        evidenceBoundary: policy.evidenceBoundary,
+        escalationTriggers: policy.escalationTriggers,
+        failureModes: policy.failureModes,
         allowedActions: d.allowedActions,
         forbiddenActions: d.forbiddenActions,
         ...(d.spendBudget != null ? { spendBudget: d.spendBudget } : {}),
-        toolAccess: d.toolAccess,
+        toolAccess,
       };
       return { op: "add-node" as const, node: contract };
     });

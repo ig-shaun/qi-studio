@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { NodeId } from "./ids.js";
+import { RoleArchetype } from "./archetype.js";
 import { AgentClass, RoleClass } from "./primitives.js";
 
 export const Capability = z.object({
@@ -13,6 +14,7 @@ export const RoleTemplate = z.object({
   kind: z.literal("role"),
   name: z.string().min(1),
   class: RoleClass,
+  archetype: RoleArchetype.optional(),
   agentClass: AgentClass.optional(),
   purpose: z.string(),
   capabilities: z.array(Capability).default([]),

@@ -3,6 +3,7 @@
 // doesn't require a schema migration.
 export * from "./ids.js";
 export * from "./primitives.js";
+export * from "./archetype.js";
 export * from "./intent.js";
 export * from "./value-loop.js";
 export * from "./pod.js";

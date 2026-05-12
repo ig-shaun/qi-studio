@@ -1,4 +1,5 @@
 import type { Graph, Node } from "../schema/index.js";
+import { getArchetypePolicy } from "../schema/archetype.js";
 import type { InvariantViolation } from "../store/invariants.js";
 import type { ChangelogEntry, Scenario, ScenarioBundle } from "../store/scenario.js";
 
@@ -231,9 +232,27 @@ const renderScenarioMarkdown = (
   if (roles.length) {
     out.push(`### Roles`, "");
     for (const r of roles) {
-      const tag = r.agentClass ? `${r.class} · ${r.agentClass}` : r.class;
+      const policy = getArchetypePolicy(r.archetype);
+      const tag = [
+        r.archetype ? policy?.label ?? r.archetype : null,
+        r.agentClass ? `${r.class} · ${r.agentClass}` : r.class,
+      ]
+        .filter(Boolean)
+        .join(" · ");
       out.push(`#### ${r.name} _(${tag})_`, "");
       out.push(`- **Purpose:** ${r.purpose}`);
+      if (policy) {
+        out.push(`- **Archetype:** ${policy.label}`);
+        out.push(`- **Guardrail:** ${policy.coreGuardrail}`);
+        out.push("", `**Authority envelope**`);
+        for (const scope of policy.authorityScopes) out.push(`- ${scope}`);
+        out.push("", `**Evidence boundary**`);
+        for (const item of policy.evidenceBoundary) out.push(`- ${item}`);
+        out.push("", `**Escalation triggers**`);
+        for (const item of policy.escalationTriggers) out.push(`- ${item}`);
+        out.push("", `**Failure modes**`);
+        for (const item of policy.failureModes) out.push(`- ${item}`);
+      }
       if (r.accountabilities.length) {
         out.push("", `**Accountabilities**`);
         for (const a of r.accountabilities) out.push(`- ${a}`);
@@ -257,6 +276,22 @@ const renderScenarioMarkdown = (
       if (supervisor) out.push(`- **Supervising human:** ${supervisor.name}`);
       if (agent) out.push(`- **Delegated agent:** ${agent.name}`);
       if (checkpoint) out.push(`- **Checkpoint:** ${checkpoint.name}`);
+      if (d.authorityScopes.length) {
+        out.push("", `**Authority scopes**`);
+        for (const scope of d.authorityScopes) out.push(`- ${scope}`);
+      }
+      if (d.evidenceBoundary.length) {
+        out.push("", `**Evidence boundary**`);
+        for (const item of d.evidenceBoundary) out.push(`- ${item}`);
+      }
+      if (d.escalationTriggers.length) {
+        out.push("", `**Escalation triggers**`);
+        for (const item of d.escalationTriggers) out.push(`- ${item}`);
+      }
+      if (d.failureModes.length) {
+        out.push("", `**Failure modes**`);
+        for (const item of d.failureModes) out.push(`- ${item}`);
+      }
       if (d.allowedActions.length) {
         out.push("", `**Allowed actions**`);
         for (const a of d.allowedActions) out.push(`- ${a}`);

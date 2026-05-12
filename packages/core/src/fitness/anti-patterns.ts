@@ -1,5 +1,6 @@
 import type { Graph, Node } from "../schema/index.js";
 import type { NodeId } from "../schema/ids.js";
+import { isRoleClassAllowedForArchetype } from "../schema/archetype.js";
 
 export type AntiPatternSeverity = "error" | "warning";
 
@@ -78,6 +79,32 @@ export const detectAntiPatterns = (graph: Graph): AntiPattern[] => {
         "Delegations with act-with-approval or act-with-audit autonomy must link a checkpoint policy.",
       severity: "error",
       nodeIds: openAuthority.map((d) => d.id),
+    });
+  }
+
+  // 3b. Roles without archetype policy coverage.
+  const missingArchetype = roles.filter((r) => !r.archetype);
+  if (missingArchetype.length > 0) {
+    out.push({
+      id: "role-missing-archetype",
+      name: "Role missing archetype",
+      description:
+        "Every role should use one of the nine IXO/Qi archetypes so authority, evidence, escalation, and failure modes are explicit.",
+      severity: "warning",
+      nodeIds: missingArchetype.map((r) => r.id),
+    });
+  }
+  const classMismatch = roles.filter(
+    (r) => r.archetype && !isRoleClassAllowedForArchetype(r.archetype, r.class)
+  );
+  if (classMismatch.length > 0) {
+    out.push({
+      id: "role-archetype-class-mismatch",
+      name: "Role class outside archetype",
+      description:
+        "The selected role class must be allowed by the role's IXO/Qi archetype policy.",
+      severity: "error",
+      nodeIds: classMismatch.map((r) => r.id),
     });
   }
 

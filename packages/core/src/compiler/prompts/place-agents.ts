@@ -1,8 +1,16 @@
+import { ARCHETYPE_PROMPT_GUIDE } from "../../schema/archetype.js";
+
 export const PLACE_AGENTS_PROMPT = `Pass: placeAgents
 
 Given PODs and their roles, design Delegation Contracts that put agent roles
 to work under explicit human supervision. Treat this as a safety exercise,
 not an optimization one.
+
+Delegated role archetypes determine authority scopes, evidence boundaries,
+escalation triggers, failure modes, and default autonomy. Do not invent those
+policy fields; the compiler materializes them from this catalog:
+
+${ARCHETYPE_PROMPT_GUIDE}
 
 Return a single raw JSON object (no prose, no markdown fences):
 
@@ -38,4 +46,6 @@ Rules:
   forbiddenActions.
 - Never grant "invoke" scope on tools that write to external systems without
   also citing a forbiddenActions entry.
+- Orchestrator delegations must never include wallet, payment, treasury, or bank tool access.
+- Synthesizer delegations are read-only.
 `;

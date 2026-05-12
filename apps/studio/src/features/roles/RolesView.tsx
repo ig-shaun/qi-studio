@@ -4,7 +4,15 @@ import { useMemo, useState } from "react";
 import type {
   Graph,
   PodProtocol,
+  RoleArchetype,
   RoleTemplate,
+} from "@ixo-studio/core/schema";
+import {
+  ARCHETYPE_POLICIES,
+  ROLE_ARCHETYPES,
+  capabilitiesForArchetype,
+  coerceRoleShapeForArchetype,
+  getArchetypePolicy,
 } from "@ixo-studio/core/schema";
 import type { GraphPatch, NodePatch } from "@ixo-studio/core/store";
 
@@ -31,6 +39,8 @@ const patchId = () =>
 
 export function RolesView({ graph, onPatch }: Props) {
   const [filter, setFilter] = useState<ClassFilter>("all");
+  const [newArchetype, setNewArchetype] =
+    useState<RoleArchetype>("executor");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,15 +91,18 @@ export function RolesView({ graph, onPatch }: Props) {
       ops: [{ op: "update-node", id: role.id, patch }],
     });
 
-  const addRole = (cls: RoleTemplate["class"]) => {
+  const addRole = (archetype: RoleArchetype) => {
+    const policy = ARCHETYPE_POLICIES[archetype];
+    const shape = coerceRoleShapeForArchetype(archetype);
     const role: RoleTemplate = {
       id: newNodeId("role"),
       kind: "role",
-      name: `New ${cls} role`,
-      class: cls,
-      ...(cls === "agent" ? { agentClass: "service" } : {}),
+      name: `${policy.label} role`,
+      class: shape.class,
+      archetype,
+      ...(shape.agentClass ? { agentClass: shape.agentClass } : {}),
       purpose: "",
-      capabilities: [],
+      capabilities: capabilitiesForArchetype(archetype),
       accountabilities: [],
       decisionRights: [],
       incumbentCount: 0,
@@ -186,26 +199,24 @@ export function RolesView({ graph, onPatch }: Props) {
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <select
+            className="select"
+            value={newArchetype}
+            onChange={(e) => setNewArchetype(e.target.value as RoleArchetype)}
+            aria-label="Archetype to add"
+          >
+            {ROLE_ARCHETYPES.map((a) => (
+              <option key={a} value={a}>
+                {ARCHETYPE_POLICIES[a].label}
+              </option>
+            ))}
+          </select>
           <button
             type="button"
             className="button button--ghost"
-            onClick={() => addRole("human")}
+            onClick={() => addRole(newArchetype)}
           >
-            + Human
-          </button>
-          <button
-            type="button"
-            className="button button--ghost"
-            onClick={() => addRole("agent")}
-          >
-            + Agent
-          </button>
-          <button
-            type="button"
-            className="button button--ghost"
-            onClick={() => addRole("hybrid")}
-          >
-            + Hybrid
+            + Archetype role
           </button>
           <button
             type="button"
@@ -276,6 +287,9 @@ function RoleCard({
   onUpdate: (patch: Partial<RoleTemplate>, rationale: string) => void;
   onRemove: () => void;
 }) {
+  const policy = getArchetypePolicy(role.archetype);
+  const classOptions = policy?.allowedClasses ?? ROLE_CLASSES;
+
   return (
     <article className="role-card" data-role-class={role.class}>
       <div className="pod-card__header">
@@ -318,6 +332,44 @@ function RoleCard({
 
       <div className="form-row">
         <label className="form-field">
+          <span className="form-field__label">Archetype</span>
+          <select
+            className="select"
+            value={role.archetype ?? ""}
+            onChange={(e) => {
+              const next = e.target.value as RoleArchetype | "";
+              if (!next) {
+                onUpdate(
+                  { archetype: undefined, capabilities: [] },
+                  "Clear archetype"
+                );
+                return;
+              }
+              const shape = coerceRoleShapeForArchetype(
+                next,
+                role.class,
+                role.agentClass
+              );
+              onUpdate(
+                {
+                  archetype: next,
+                  class: shape.class,
+                  agentClass: shape.agentClass,
+                  capabilities: capabilitiesForArchetype(next),
+                },
+                "Edit role archetype"
+              );
+            }}
+          >
+            <option value="">— choose archetype</option>
+            {ROLE_ARCHETYPES.map((a) => (
+              <option key={a} value={a}>
+                {ARCHETYPE_POLICIES[a].label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="form-field">
           <span className="form-field__label">Class</span>
           <select
             className="select"
@@ -329,11 +381,11 @@ function RoleCard({
               // forbidden when class=human.
               if (next === "human") patch.agentClass = undefined;
               if (next === "agent" && !role.agentClass)
-                patch.agentClass = "service";
+                patch.agentClass = policy?.defaultAgentClass ?? "service";
               onUpdate(patch, "Change role class");
             }}
           >
-            {ROLE_CLASSES.map((c) => (
+            {classOptions.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
@@ -367,6 +419,21 @@ function RoleCard({
           </label>
         )}
       </div>
+
+      {policy && (
+        <section>
+          <div className="form-field__label" style={{ marginBottom: 6 }}>
+            Policy envelope
+          </div>
+          <p className="inspector-lead" style={{ marginTop: 0 }}>
+            {policy.coreGuardrail}
+          </p>
+          <ReadonlyList label="Authority" values={policy.authorityScopes} />
+          <ReadonlyList label="Evidence" values={policy.evidenceBoundary} />
+          <ReadonlyList label="Escalation" values={policy.escalationTriggers} />
+          <ReadonlyList label="Failure modes" values={policy.failureModes} />
+        </section>
+      )}
 
       <StringList
         label="Accountabilities"
@@ -430,6 +497,29 @@ function RoleCard({
         </div>
       </div>
     </article>
+  );
+}
+
+function ReadonlyList({
+  label,
+  values,
+}: {
+  label: string;
+  values: readonly string[];
+}) {
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div className="form-field__label" style={{ marginBottom: 4 }}>
+        {label}
+      </div>
+      <div className="chip-row">
+        {values.map((value) => (
+          <span key={value} className="chip chip--muted">
+            {value}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emptyGraph } from "../schema/index.js";
+import { emptyGraph, materializeDelegationPolicy } from "../schema/index.js";
 import { emptyScenarioBundle, TARGET_SCENARIO_ID } from "../store/scenario.js";
 import { renderWorkspaceMarkdown } from "./markdown.js";
 
@@ -62,5 +62,47 @@ describe("renderWorkspaceMarkdown", () => {
     const md = renderWorkspaceMarkdown({ bundle });
     expect(md).toContain("## Solo");
     expect(md).toContain("_This scenario is empty._");
+  });
+
+  it("renders role archetype and delegation policy envelopes", () => {
+    const bundle = emptyScenarioBundle();
+    const target = bundle.scenarios.find((s) => s.id === TARGET_SCENARIO_ID)!;
+    target.graph = {
+      nodes: {
+        role_agent: {
+          id: "role_agent",
+          kind: "role",
+          name: "Sentinel Monitor",
+          class: "agent",
+          archetype: "sentinel",
+          agentClass: "service",
+          purpose: "Watch guardrails",
+          capabilities: [],
+          accountabilities: [],
+          decisionRights: [],
+          incumbentCount: 0,
+        },
+        deleg_1: {
+          id: "deleg_1",
+          kind: "delegation",
+          podId: "pod_1",
+          supervisingHumanRoleId: "role_human",
+          delegatedAgentRoleId: "role_agent",
+          mandate: "Pause unsafe flows",
+          ...materializeDelegationPolicy("sentinel"),
+          allowedActions: [],
+          forbiddenActions: [],
+          toolAccess: [],
+        },
+      },
+      edges: {},
+    };
+
+    const md = renderWorkspaceMarkdown({ bundle });
+    expect(md).toContain("- **Archetype:** Sentinel");
+    expect(md).toContain("flow:pause");
+    expect(md).toContain("Threshold breaches pause implicated flows");
+    expect(md).toContain("**Evidence boundary**");
+    expect(md).toContain("Noisy false positives");
   });
 });

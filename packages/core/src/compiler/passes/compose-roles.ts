@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { newNodeId, type NodeId } from "../../schema/ids.js";
+import {
+  capabilitiesForArchetype,
+  coerceRoleShapeForArchetype,
+  RoleArchetype,
+} from "../../schema/archetype.js";
 import { AgentClass, RoleClass } from "../../schema/primitives.js";
 import type { RoleTemplate } from "../../schema/index.js";
 import type { Pass } from "./types.js";
@@ -15,6 +20,7 @@ const ResponseSchema = PatchMetaSchema.extend({
       z.object({
         tempId: z.string().min(1),
         name: z.string().min(1),
+        archetype: RoleArchetype,
         class: RoleClass,
         agentClass: AgentClass.nullable(),
         purpose: z.string(),
@@ -56,27 +62,26 @@ export const composeRoles: Pass = async (ctx) => {
     ...(ctx.signal ? { signal: ctx.signal } : {}),
   });
 
-  // Cross-field validation the Zod schema can't express on its own.
-  const validRoles = parsed.roles.filter((r) => {
-    if (r.class === "human") return r.agentClass === null;
-    if (r.class === "agent") return r.agentClass !== null;
-    return true; // hybrid allows either
-  });
-
   const tempIdToNodeId = new Map<string, NodeId>();
   const ops: NodePatch[] = [];
 
-  for (const r of validRoles) {
+  for (const r of parsed.roles) {
+    const shape = coerceRoleShapeForArchetype(
+      r.archetype,
+      r.class,
+      r.agentClass
+    );
     const id = newNodeId("role");
     tempIdToNodeId.set(r.tempId, id);
     const role: RoleTemplate = {
       id,
       kind: "role",
       name: r.name,
-      class: r.class,
-      ...(r.agentClass ? { agentClass: r.agentClass } : {}),
+      class: shape.class,
+      archetype: r.archetype,
+      ...(shape.agentClass ? { agentClass: shape.agentClass } : {}),
       purpose: r.purpose,
-      capabilities: [],
+      capabilities: capabilitiesForArchetype(r.archetype),
       accountabilities: r.accountabilities,
       decisionRights: r.decisionRights,
       incumbentCount: 0,

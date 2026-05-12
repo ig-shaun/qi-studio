@@ -8,6 +8,10 @@ import type {
   PodProtocol,
   RoleTemplate,
 } from "@ixo-studio/core/schema";
+import {
+  getArchetypePolicy,
+  materializeDelegationPolicy,
+} from "@ixo-studio/core/schema";
 import type { GraphPatch, NodePatch } from "@ixo-studio/core/store";
 
 type Props = {
@@ -34,6 +38,17 @@ const patchId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
+
+const delegationPolicyPatchFor = (
+  role?: RoleTemplate
+): Pick<
+  DelegationContract,
+  | "autonomyLevel"
+  | "authorityScopes"
+  | "evidenceBoundary"
+  | "escalationTriggers"
+  | "failureModes"
+> => materializeDelegationPolicy(role?.archetype);
 
 export function DelegationsView({ graph, onPatch }: Props) {
   const [busy, setBusy] = useState(false);
@@ -129,7 +144,7 @@ export function DelegationsView({ graph, onPatch }: Props) {
       supervisingHumanRoleId: supervisor.id,
       delegatedAgentRoleId: agent.id,
       mandate: "",
-      autonomyLevel: "assist",
+      ...delegationPolicyPatchFor(agent),
       allowedActions: [],
       forbiddenActions: [],
       toolAccess: [],
@@ -348,12 +363,14 @@ function DelegationCard({
               if (!nextPod) return;
               const nextSupervisor = nextPod.humanRoleIds[0] ?? "";
               const nextAgent = nextPod.agentRoleIds[0] ?? "";
+              const nextAgentRole = rolesById.get(nextAgent);
               onUpdate(
                 {
                   podId: nextPod.id,
                   supervisingHumanRoleId:
                     nextSupervisor || d.supervisingHumanRoleId,
                   delegatedAgentRoleId: nextAgent || d.delegatedAgentRoleId,
+                  ...delegationPolicyPatchFor(nextAgentRole ?? agent),
                 },
                 "Change delegation POD"
               );
@@ -422,7 +439,10 @@ function DelegationCard({
             value={d.delegatedAgentRoleId}
             onChange={(e) =>
               onUpdate(
-                { delegatedAgentRoleId: e.target.value },
+                {
+                  delegatedAgentRoleId: e.target.value,
+                  ...delegationPolicyPatchFor(rolesById.get(e.target.value)),
+                },
                 "Change delegated agent"
               )
             }
@@ -434,6 +454,9 @@ function DelegationCard({
                 <option key={r.id} value={r.id}>
                   {r.name}
                   {r.agentClass ? ` · ${r.agentClass}` : ""}
+                  {r.archetype
+                    ? ` · ${getArchetypePolicy(r.archetype)?.label ?? r.archetype}`
+                    : ""}
                 </option>
               ))
             )}
@@ -471,6 +494,27 @@ function DelegationCard({
           onUpdate({ forbiddenActions: next }, "Edit forbidden actions")
         }
       />
+
+      <section>
+        <div className="form-field__label" style={{ marginBottom: 6 }}>
+          Archetype policy envelope
+        </div>
+        {agent?.archetype ? (
+          <>
+            <p className="inspector-lead" style={{ marginTop: 0 }}>
+              {getArchetypePolicy(agent.archetype)?.coreGuardrail}
+            </p>
+            <ReadonlyList label="Authority" values={d.authorityScopes} />
+            <ReadonlyList label="Evidence" values={d.evidenceBoundary} />
+            <ReadonlyList label="Escalation" values={d.escalationTriggers} />
+            <ReadonlyList label="Failure modes" values={d.failureModes} />
+          </>
+        ) : (
+          <div className="form-empty">
+            Pick an archetyped delegated role to materialize its authority envelope.
+          </div>
+        )}
+      </section>
 
       <section>
         <div className="form-field__label" style={{ marginBottom: 6 }}>
@@ -566,6 +610,29 @@ function DelegationCard({
         />
       </label>
     </article>
+  );
+}
+
+function ReadonlyList({
+  label,
+  values,
+}: {
+  label: string;
+  values: readonly string[];
+}) {
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div className="form-field__label" style={{ marginBottom: 4 }}>
+        {label}
+      </div>
+      <div className="chip-row">
+        {values.map((value) => (
+          <span key={value} className="chip chip--muted">
+            {value}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
