@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Graph, emptyGraph } from "../schema/index.js";
+import { MigrationPlan } from "../migration/types.js";
 import {
   Scenario,
   ScenarioBundle,
@@ -28,6 +29,7 @@ export const WorkspaceFileV2 = z.object({
   prompt: z.string().optional(),
   scenarios: z.array(Scenario),
   activeScenarioId: z.string(),
+  migrationPlan: MigrationPlan.optional(),
 });
 export type WorkspaceFileV2 = z.infer<typeof WorkspaceFileV2>;
 
@@ -52,6 +54,7 @@ export const serializeWorkspace = ({
   ...(prompt ? { prompt } : {}),
   scenarios: bundle.scenarios,
   activeScenarioId: bundle.activeScenarioId,
+  ...(bundle.migrationPlan ? { migrationPlan: bundle.migrationPlan } : {}),
 });
 
 export class WorkspaceImportError extends Error {
@@ -86,6 +89,7 @@ export const parseWorkspace = (text: string): ParseWorkspaceResult => {
       bundle: {
         scenarios: v2.data.scenarios,
         activeScenarioId: v2.data.activeScenarioId,
+        ...(v2.data.migrationPlan ? { migrationPlan: v2.data.migrationPlan } : {}),
       },
       ...(v2.data.workspaceName ? { workspaceName: v2.data.workspaceName } : {}),
       ...(v2.data.prompt ? { prompt: v2.data.prompt } : {}),

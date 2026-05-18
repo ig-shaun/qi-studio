@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Graph, emptyGraph } from "../schema/graph.js";
+import { MigrationPlan } from "../migration/types.js";
 import type { GraphPatch, GraphPatchSource } from "./patch.js";
 
 export const ScenarioKind = z.enum([
@@ -50,6 +51,7 @@ export type Scenario = z.infer<typeof Scenario>;
 export const ScenarioBundle = z.object({
   scenarios: z.array(Scenario),
   activeScenarioId: z.string(),
+  migrationPlan: MigrationPlan.optional(),
 });
 export type ScenarioBundle = z.infer<typeof ScenarioBundle>;
 

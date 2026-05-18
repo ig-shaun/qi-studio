@@ -103,6 +103,15 @@ export const icons: Record<ViewId, (p?: P) => JSX.Element> = {
       <path d="M5 12h5" />
     </svg>
   ),
+  migration: (p) => (
+    <svg {...base} {...p}>
+      <circle cx="4" cy="4.5" r="1.6" />
+      <circle cx="14" cy="13.5" r="1.6" />
+      <path d="M4 6.1v5.3" />
+      <path d="M4 11.4c0 1.5 1.1 2.6 2.6 2.6H11" />
+      <path d="M9 12l2.5 2-2.5 2" />
+    </svg>
+  ),
 };
 
 export function BrandMark(p: P = {}) {

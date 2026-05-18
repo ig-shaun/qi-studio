@@ -9,8 +9,7 @@ export type PassId =
   | "placeAgents"
   | "synthesizeGovernance"
   | "wireFlows"
-  | "evaluateFitness"
-  | "generatePath";
+  | "evaluateFitness";
 
 export type PassContext = {
   graph: Graph;
