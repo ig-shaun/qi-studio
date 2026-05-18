@@ -32,7 +32,6 @@ const PASS_LABELS: Record<string, string> = {
   synthesizeGovernance: "Synthesizing governance",
   wireFlows: "Wiring flows",
   evaluateFitness: "Evaluating fitness",
-  generatePath: "Generating path",
 };
 
 type PassStatus = "pending" | "running" | "done";

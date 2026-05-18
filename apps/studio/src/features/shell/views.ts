@@ -8,6 +8,7 @@ export type ViewId =
   | "flow"
   | "governance"
   | "fitness"
+  | "migration"
   | "changelog";
 
 export type ViewDef = {
@@ -32,7 +33,7 @@ export const VIEWS: ViewDef[] = [
     eyebrow: "System view",
     title: "Organism",
     subtitle:
-      "Radial constellation. Mission at center, value loops, PODs, and role clusters radiating outward.",
+      "The organisational structure. Value loops, PODs, and roles clusters flow outwards from the central mission.",
   },
   {
     id: "loops",
@@ -65,9 +66,9 @@ export const VIEWS: ViewDef[] = [
   },
   {
     id: "flow",
-    label: "Qi Flow",
+    label: "Intelligence Flows",
     eyebrow: "Signal view",
-    title: "Qi Flow",
+    title: "Intelligence Flows",
     subtitle: "Sensing, meaning, decisioning, execution, learning.",
   },
   {
@@ -83,6 +84,13 @@ export const VIEWS: ViewDef[] = [
     eyebrow: "Simulation view",
     title: "Fitness Lab",
     subtitle: "Stress tests and design fitness.",
+  },
+  {
+    id: "migration",
+    label: "Migration Plan",
+    eyebrow: "Path view",
+    title: "Migration Plan",
+    subtitle: "Sequenced narrative for moving from source scenario to target.",
   },
   {
     id: "changelog",

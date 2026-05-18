@@ -8,7 +8,6 @@ import { placeAgents } from "./passes/place-agents.js";
 import { synthesizeGovernance } from "./passes/synthesize-governance.js";
 import { wireFlows } from "./passes/wire-flows.js";
 import { evaluateFitness } from "./passes/evaluate-fitness.js";
-import { generatePath } from "./passes/generate-path.js";
 import type { Pass, PassResult } from "./passes/types.js";
 
 const ALL_PASSES: Pass[] = [
@@ -20,7 +19,6 @@ const ALL_PASSES: Pass[] = [
   synthesizeGovernance,
   wireFlows,
   evaluateFitness,
-  generatePath,
 ];
 
 import type { PassId } from "./passes/types.js";
@@ -34,7 +32,6 @@ export const PASS_ORDER: readonly PassId[] = [
   "synthesizeGovernance",
   "wireFlows",
   "evaluateFitness",
-  "generatePath",
 ] as const;
 
 export type CompileOptions = {
