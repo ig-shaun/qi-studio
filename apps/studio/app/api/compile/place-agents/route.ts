@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { placeAgents, CopilotOutputError, type Graph } from "@ixo-studio/core";
+import { formatCompileError } from "../error-message";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -19,7 +20,6 @@ export async function POST(req: Request) {
     if (err instanceof CopilotOutputError) {
       console.error("[raw copilot output]\n", err.raw);
     }
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: formatCompileError(err) }, { status: 500 });
   }
 }

@@ -5,6 +5,7 @@ import {
   CopilotOutputError,
   PASS_ORDER,
 } from "@ixo-studio/core";
+import { formatCompileError } from "./error-message";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -48,8 +49,7 @@ export async function POST(req: Request) {
         if (err instanceof CopilotOutputError) {
           console.error("[api/compile] raw copilot output:\n", err.raw);
         }
-        const message = err instanceof Error ? err.message : String(err);
-        write({ type: "error", message });
+        write({ type: "error", message: formatCompileError(err) });
       } finally {
         controller.close();
       }

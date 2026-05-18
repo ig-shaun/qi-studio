@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Qi Studio</title>
+    <meta
+      name="description"
+      content="Qi Studio is an intent-first design environment for shaping AI-native organisations."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="command-bar panel">
+        <div class="brand-cluster">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-copy">
+            <div class="eyebrow">Intent-first design environment</div>
+            <h1>Qi Studio</h1>
+          </div>
+        </div>
+
+        <div class="workspace-chip">
+          <span class="workspace-chip__label">Workspace</span>
+          <span id="workspaceName" class="workspace-chip__value"
+            >AI-native Operating Model</span
+          >
+        </div>
+
+        <label class="search-field" aria-label="Search">
+          <span class="search-field__icon" aria-hidden="true">+</span>
+          <input
+            type="search"
+            placeholder="Search PODs, roles, agents, flows..."
+            autocomplete="off"
+          />
+        </label>
+
+        <div class="command-actions">
+          <button class="button button--primary" data-open-modal="ai">
+            Generate with AI
+          </button>
+          <button class="button button--secondary" data-open-modal="stress">
+            Stress test
+          </button>
+          <button class="button button--ghost" data-export="demo">
+            Export
+          </button>
+        </div>
+      </header>
+
+      <div class="app-grid">
+        <nav id="navRail" class="nav-rail panel" aria-label="Primary"></nav>
+
+        <main class="canvas-panel panel">
+          <header class="canvas-panel__header">
+            <div>
+              <div id="viewEyebrow" class="eyebrow">System view</div>
+              <h2 id="viewTitle">Organism</h2>
+              <p id="viewSubtitle" class="canvas-panel__subtitle"></p>
+            </div>
+            <div id="viewMeta" class="view-meta"></div>
+          </header>
+
+          <section id="canvasContent" class="canvas-panel__content"></section>
+        </main>
+
+        <aside id="inspectorPanel" class="inspector-panel panel"></aside>
+      </div>
+
+      <section
+        id="scenarioBar"
+        class="scenario-bar panel"
+        aria-label="Scenario timeline"
+      ></section>
+    </div>
+
+    <div id="modalRoot"></div>
+    <div id="toastRoot" class="toast-stack" aria-live="polite"></div>
+
+    <script src="./data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { parseIntent } from "@ixo-studio/core";
 import { emptyGraph } from "@ixo-studio/core";
+import { formatCompileError } from "../error-message";
 
 export const runtime = "nodejs";
 
@@ -15,7 +16,6 @@ export async function POST(req: Request) {
     const result = await parseIntent({ graph: emptyGraph(), userPrompt: prompt });
     return NextResponse.json(result);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: formatCompileError(err) }, { status: 500 });
   }
 }
